@@ -72,3 +72,5 @@ venv/
 
 # vim swap files
 *.swp
+.idea
+*.idea
