@@ -1,6 +1,19 @@
-from django.conf.urls import url
-from .views import get_name
+from django.conf.urls import url, include
+from rest_framework import routers
+
+import views
+
+# API stuff
+router = routers.DefaultRouter(trailing_slash=False)
+router.register(r'quizzes', views.QuizViewSet)
 
 urlpatterns = [
-    url(r'^quiz/', get_name, name='quiz')
+    url(r'^quiz-template/$', views.get_name, name='quiztemplate'),
+    # See https://stackoverflow.com/a/18359032 for the Regex explanation
+    # Unauthenticated view
+    url(r'^quiz/(?P<id>[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12})/$',
+        views.get_quiz_by_id, name='quiz'),
+    # Authenticated view
+    url(r'^incident/(?P<incident_id>[0-9]+)/$', views.get_quiz_by_incident, name='quiz-by-incident'),
+    url(r'^api/', include(router.urls))
 ]
