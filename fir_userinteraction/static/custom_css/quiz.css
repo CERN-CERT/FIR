@@ -1,5 +1,14 @@
-input {
+/*input {
     display: block;
+}
+
+input[type=checkbox] {
+    float: left;
+    margin-right: 10px;
+}
+
+label {
+    width: 90%;
 }
 
 textarea {
@@ -9,4 +18,12 @@ textarea {
 .errorlist {
     color: red;
     font-weight: bold;
+}*/
+
+.quiz-title {
+    color: #47749E !important;
+}
+
+.activity-details {
+    color: #5A93C9 !important;
 }
