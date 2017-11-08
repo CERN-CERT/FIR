@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load bootstrap %}
+{% load add_css_class %}
+{% load i18n %}
+{% load staticfiles %}
+{% load fir_plugins %}
+{% load index %}
+
+{% block custom_css %}
+<link href="{% static 'custom_css/quiz.css' %}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-10 col-md-push-1">
+            <h1 class="quiz-title">Your security incident forms:</h1>
+            <ul>
+                {% for quiz in quizzes %}
+                <li>
+                    <span><a href="{% url 'userinteraction:quiz' quiz.id %}">{{quiz.incident}}</a>
+                        <span style="margin-left: 30px;">( Category: {{quiz.template.category}} - answered: {{quiz.is_answered}} )</span></span>
+                </li>
+
+                {% endfor %}
+            </ul>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -14,12 +14,6 @@
     <div class="row">
         <div class="col-md-10 col-md-push-1">
 
-            <!--Comment these out for now-->
-            <!--<input type="button" class="btn btn-primary" value="Get Spam quiz"-->
-            <!--onclick="location.href='{% url 'userinteraction:quiztemplate' %}?type=spam'">-->
-            <!--<input type="button" class="btn btn-primary" value="Get Malware quiz"-->
-            <!--onclick="location.href='{% url 'userinteraction:quiztemplate' %}?type=malware'">-->
-
             {% if thanks %}
             <div class="alert alert-info"><p>{{thanks}}</p></div>
             <hr>
@@ -35,6 +29,7 @@
             <h2>Incident: <b>{{ quiz.incident }}, </b>ID: <b>{{quiz.incident.id}}</b></h2>
             <h2>Category: <b>{{ quiz.template.category }}</b></h2>
             <h2>Quiz template name: <b>{{ quiz.template.name }}</b></h2>
+            <h2>Answered: <b>{{ quiz.is_answered }}</b></h2>
 
             <hr>
             <h2 class="activity-details">Activity details: </h2>
@@ -51,9 +46,11 @@
                 <legend class="quiz-title">{{names | index:forloop.counter}}</legend>
                 {{form|bootstrap }}
                 {% endfor %}
+                {% if quiz.is_answered == False %}
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </div>
+                {% endif %}
             </form>
         </div>
     </div>

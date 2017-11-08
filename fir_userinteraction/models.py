@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 
 from django.contrib.auth import get_user_model
-
-from incidents.models import Incident, IncidentCategory
+from django.core.urlresolvers import reverse
+from django.dispatch import Signal, receiver
+from ipware.ip import get_ip
+from incidents.models import Incident, IncidentCategory, Comments, Label
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
@@ -66,7 +68,27 @@ class QuizAnswer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     question_group = models.ForeignKey(QuestionGroup, on_delete=models.CASCADE)
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    answer_value = models.CharField(max_length=100)
+    answer_value = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
-        return 'Answer to question "{}" in quiz {}'.format(self.question.label, self.quiz.id)
+        return '{} - Question: "{}"'.format(self.question.label, self.quiz.id)
+
+
+# Signals
+model_updated = Signal(providing_args=['instance', 'request'])
+
+
+@receiver(model_updated, sender=Quiz)
+def create_comment_for_answered_quiz(sender, instance, request, **kwargs):
+    user = request.user if request.user is not None else 'AnonymousUser'
+    ip = get_ip(request)
+    quiz_url = request.build_absolute_uri()
+    full_user = '{}@{}'.format(str(user), str(ip))
+
+    print('Got a comment!!!')
+    Comments.objects.create(incident=instance.incident,
+                            comment='A quiz has been answered: {}.\n The user that commented is: {}'.format(
+                                quiz_url,
+                                full_user),
+                            action=Label.objects.get(name='Alerting', group__name='action'),
+                            opened_by=instance.incident.opened_by)

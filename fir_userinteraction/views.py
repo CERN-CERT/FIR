@@ -1,6 +1,10 @@
+from importlib import import_module
+
 from django import forms
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, HttpResponse, get_object_or_404
+from django.forms.utils import ErrorDict
+from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -9,53 +13,14 @@ from fir_api.permissions import IsIncidentHandler
 from fir_userinteraction.serializers import QuizSerializer
 from incidents.authorization.decorator import authorization_required
 from incidents.models import Incident
-from .models import Quiz, QuestionGroup
-from django.forms import formset_factory
-from django.forms.utils import ErrorDict
+from .models import Quiz, QuizAnswer, QuizTemplate, model_updated
 
-from importlib import import_module
-
-FIELDS_DICT = {
-    'spam': {
-        '1question1': forms.BooleanField(widget=forms.CheckboxInput, label='Did you give your password to anyone?'),
-        '2message': forms.CharField(widget=forms.Textarea,
-                                    label='Tell us about websites that you registered for recently'),
-        '3extra_comments': forms.CharField(widget=forms.Textarea, label='Anything extra to add?'),
-        'quiz_type': forms.CharField(widget=forms.HiddenInput(), required=False, initial='spam')
-    },
-    'malware': {
-        'question1': forms.BooleanField(widget=forms.CheckboxInput, label='Did you try installing an antivirus?'),
-        'question2': forms.BooleanField(widget=forms.CheckboxInput,
-                                        label='Did you try turning your computer on and off again?'),
-        'question3': forms.BooleanField(widget=forms.CheckboxInput,
-                                        label='Did you click any suspicious links?'),
-        'txt1message': forms.CharField(widget=forms.Textarea,
-                                       label='Tell us about your browsing activity in the last day'),
-        'extra_comments': forms.CharField(widget=forms.Textarea, label='Anything extra to add?'),
-        'quiz_type': forms.CharField(widget=forms.HiddenInput(), required=False, initial='malware')
-
+FIELD_MAPPINGS = {
+    'django.forms.BooleanField': {
+        'on': True,
+        'off': False
     }
 }
-
-ALLOWED_FIELDS = ['spam', 'malware']
-
-
-# Create your views here.
-def get_name(request):
-    if request.method == 'POST' and 'quiz_type' in request.POST:
-        form = build_dynamic_form(FIELDS_DICT[request.POST['quiz_type']], request.POST)
-        print('Valid: {}'.format(form.is_valid()))
-        print('Bound: {}'.format(form.is_bound))
-        print('Data: {}'.format(form.data))
-        return render(request, 'userinteraction/name.html',
-                      {'form': form, 'thanks': 'Thank you for filling in the form!'})
-
-    else:
-        fields_dict = {}
-        if 'type' in request.GET and request.GET['type'] in ALLOWED_FIELDS:
-            fields_dict = FIELDS_DICT[request.GET['type']]
-        form = build_dynamic_form(fields_dict)
-        return render(request, 'userinteraction/name.html', {'form': form})
 
 
 # Utility function
@@ -79,19 +44,19 @@ def build_dynamic_form(field_dict, form_id=None, get_class=None, data=None):
         return dyn_form(data=data)
 
 
-def build_form_field(question):
+def build_form_field(question, readonly):
     field_dict = {}
     field_type = import_from_module(question.field_type)
     widget_type = None
     if question.widget_type:
         widget_type = import_from_module(question.widget_type)
     field_dict['id'] = str(question.id)
-    field_dict['field'] = field_type(widget=widget_type, label=question.label, required=False)
+    field_dict['field'] = field_type(widget=widget_type, label=question.label, required=False, disabled=readonly)
     return field_dict
 
 
-def build_form_from_questions(questions, form_id):
-    fields = map(build_form_field, questions)
+def build_form_from_questions(questions, form_id, readonly):
+    fields = map(lambda q: build_form_field(q, readonly), questions)
     form_fields = {}
     for field in fields:
         form_fields[field['id']] = field['field']
@@ -99,26 +64,30 @@ def build_form_from_questions(questions, form_id):
     return build_dynamic_form(form_fields, form_id=form_id, get_class=True)
 
 
-def build_form_from_template(question_group, form_id, request=None):
+def build_form_from_template(question_group, request=None, readonly=False, initial=None):
     questions = question_group.questions.all()
-    form_class = build_form_from_questions(questions, form_id)
+    form_class = build_form_from_questions(questions, question_group.id, readonly)
     if not request:
-        return form_class(prefix='{}'.format(str(question_group.id)))
+        return form_class(prefix='{}'.format(str(question_group.id)), initial=initial)
     else:
-        return form_class(request.POST, prefix='{}'.format(str(question_group.id)))
+        return form_class(request.POST, prefix='{}'.format(str(question_group.id)), initial=initial)
 
 
-def validate_formset(db_form, formset):
-    if db_form.required:
-        answers = {}
-        for question in db_form.questions.all():
-            # Get the question with this id from the current question group
-            form_question_keys = filter(
-                lambda x: x.startswith(str(db_form.id)) and x.endswith('-{}'.format(question.id)), formset.data)
-            answer = formset.data[form_question_keys[0]] if len(form_question_keys) > 0 else None
-            if answer:
-                answers[question.id] = str(answer)
+def extract_form_answers(question_group, formset):
+    answers = {}
+    for question in question_group.questions.all():
+        # Get the question with this id from the current question group
+        form_question_keys = filter(
+            lambda x: x.startswith(str(question_group.id)) and x.endswith('-{}'.format(question.id)), formset.data)
+        answer = formset.data[form_question_keys[0]] if len(form_question_keys) > 0 else None
+        if answer:
+            answers[question.id] = str(answer)
+    return answers
 
+
+def validate_formset(question_group, formset):
+    if question_group.required:
+        answers = extract_form_answers(question_group, formset)
         # Needed to unset all of the errors
         formset._errors = ErrorDict()
         formset.cleaned_data = formset.data
@@ -127,10 +96,82 @@ def validate_formset(db_form, formset):
     return True
 
 
+def save_answers(request, quiz, question_groups, formsets):
+    for i in xrange(len(question_groups)):
+        group = question_groups[i]
+        answers = extract_form_answers(group, formsets[i])
+        for k, v in answers.iteritems():
+            question = group.questions.get(id=k)
+            answer = QuizAnswer.objects.create(question=question, question_group=group, quiz=quiz, answer_value=v)
+            print('Created answer: {}'.format(str(answer)))
+
+    quiz.is_answered = True
+    quiz.user = request.user
+    quiz.save()
+    model_updated.send(sender=quiz.__class__, instance=quiz, request=request)
+
+
+def render_quiz(request, quiz):
+    question_groups = quiz.template.question_groups.all()
+    formsets = []
+    if request.method == 'GET':
+        for group in question_groups:
+            formsets.append(build_form_from_template(group))
+        return render(request, 'userinteraction/quiz-sets.html',
+                      {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': quiz})
+    else:
+        # POST case
+        validations = []
+        for group in question_groups:
+            formsets.append(build_form_from_template(group, request=request))
+            is_valid = validate_formset(group, formsets[-1])
+            validations.append(is_valid)
+            if not is_valid:
+                formsets[-1].add_error(None, 'At least one checkbox needs to be ticked!')
+        if len(filter(lambda x: x is False, validations)) > 0:
+            return render(request, 'userinteraction/quiz-sets.html',
+                          {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': quiz})
+        else:
+            # All forms are valid, save the answer and return readonly quiz
+            save_answers(request, quiz, question_groups, formsets)
+            return redirect('userinteraction:quiz', id=quiz.id)
+
+
+def render_answered_quiz(request, quiz):
+    print('Rendering answered quiz')
+    question_groups = quiz.template.question_groups.all()
+    answers = QuizAnswer.objects.filter(quiz=quiz)
+    formsets = []
+    for group in question_groups:
+        group_answers = answers.filter(question_group=group)
+        answer_dict = {str(answer.question.id): answer.answer_value for answer in group_answers}
+        print(answer_dict)
+        formsets.append(build_form_from_template(group, readonly=True, initial=answer_dict))
+
+    return render(request, 'userinteraction/quiz-sets.html',
+                  {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': quiz,
+                   'thanks': 'This form is already answered, you are seeing a read-only view of the completed form.'})
+
+
+def get_or_create_quiz(incident):
+    try:
+        user_quiz = Quiz.objects.get(incident_id=incident.id)
+    except Quiz.DoesNotExist:
+        template = get_object_or_404(QuizTemplate, category=incident.category)
+        user_quiz = Quiz.objects.create(template=template, incident=incident)
+    return user_quiz
+
+
 @require_http_methods(['GET', 'POST'])
 def get_quiz_by_id(request, id):
     user_quiz = get_object_or_404(Quiz, id=id)
-    return render_quiz(request, user_quiz)
+    answered = user_quiz.is_answered
+    if answered and request.method == 'POST':
+        return HttpResponse(status=400, content='This form has already been filled in!!')
+    if answered is False:
+        return render_quiz(request, user_quiz)
+    else:
+        return render_answered_quiz(request, user_quiz)
 
 
 @require_http_methods(['GET', 'POST'])
@@ -144,37 +185,21 @@ def get_quiz_by_incident(request, incident_id, authorization_target=None):
     else:
         incident = authorization_target
 
-    print(incident)
-    user_quiz = get_object_or_404(Quiz, incident_id=incident.id)
-    return render_quiz(request, user_quiz)
-
-
-def render_quiz(request, user_quiz):
-    question_groups = user_quiz.template.question_groups.all()
-    formsets = []
-    if request.method == 'GET':
-        for group in question_groups:
-            formsets.append(build_form_from_template(group, group.id))
-        return render(request, 'userinteraction/quiz-sets.html',
-                      {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': user_quiz})
+    quiz = get_or_create_quiz(incident)
+    answered = quiz.is_answered
+    if answered and request.method == 'POST':
+        return HttpResponse(status=400, content='This form has already been filled in!!')
+    if answered is False:
+        return render_quiz(request, quiz)
     else:
-        # POST case
-        validations = []
-        for group in question_groups:
-            formsets.append(build_form_from_template(group, group.id, request=request))
-            is_valid = validate_formset(group, formsets[-1])
-            validations.append(is_valid)
-            if not is_valid:
-                formsets[-1].add_error(None, 'At least one checkbox needs to be ticked!')
+        return render_answered_quiz(request, quiz)
 
-        print(validations)
-        if len(filter(lambda x: x is False, validations)) > 0:
-            return render(request, 'userinteraction/quiz-sets.html',
-                          {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': user_quiz})
-        else:
-            return render(request, 'userinteraction/quiz-sets.html',
-                          {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': user_quiz,
-                           'thanks': 'Thanks for filling in the form! Your answer has been recorded'})
+
+@require_http_methods(['GET'])
+@login_required
+def show_all_quizzes(request):
+    user_quizzes = Quiz.objects.filter(user=request.user)
+    return render(request, 'userinteraction/quiz-list.html', {'quizzes': user_quizzes})
 
 
 # API related stuff
