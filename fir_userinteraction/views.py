@@ -236,8 +236,6 @@ def get_quizzes_from_incidents(incidents):
 @require_http_methods(['GET'])
 @login_required
 def show_all_quizzes(request):
-    user_quizzes = Quiz.objects.filter(user=request.user)
-
     permissions = 'incidents.view_incidents'
     incident_list = Incident.authorization.for_user(request.user, permissions).filter(~Q(quiz=None))
 
