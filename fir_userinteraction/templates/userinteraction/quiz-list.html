@@ -1,10 +1,11 @@
-{% extends "base.html" %}
+{% extends "userinteraction/base_user_interaction.html" %}
 {% load bootstrap %}
 {% load add_css_class %}
 {% load i18n %}
 {% load staticfiles %}
 {% load fir_plugins %}
 {% load index %}
+{% load gethash %}
 
 {% block custom_css %}
 <link href="{% static 'custom_css/quiz.css' %}" rel="stylesheet">
@@ -14,17 +15,38 @@
 <div class="container">
     <div class="row">
         <div class="col-md-10 col-md-push-1">
-            <h1 class="quiz-title">Your security incident forms:</h1>
-            <ul>
-                {% for quiz in quizzes %}
-                <li>
-                    <span><a href="{% url 'userinteraction:quiz' quiz.id %}">{{quiz.incident}}</a>
-                        <span style="margin-left: 30px;">( Category: {{quiz.template.category}} - answered: {{quiz.is_answered}} )</span></span>
-                </li>
-
-                {% endfor %}
-            </ul>
-
+            <h1 class="quiz-title">Your security incidents:</h1>
+            <hr>
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" href="#collapseOne">Blocked</a>
+                    </h4>
+                </div>
+                <div id="collapseOne" class="panel-collapse collapse in">
+                    {% include "userinteraction/widgets/quiz-list-panel.html" with quizzes=blocked %}
+                </div>
+            </div>
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" href="#collapseTwo">Opened</a>
+                    </h4>
+                </div>
+                <div id="collapseTwo" class="panel-collapse collapse in">
+                    {% include "userinteraction/widgets/quiz-list-panel.html" with quizzes=opened %}
+                </div>
+            </div>
+            <div class="panel panel-success">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" href="#collapseThree">Closed</a>
+                    </h4>
+                </div>
+                <div id="collapseThree" class="panel-collapse collapse">
+                    {% include "userinteraction/widgets/quiz-list-panel.html" with quizzes=closed %}
+                </div>
+            </div>
         </div>
     </div>
 </div>

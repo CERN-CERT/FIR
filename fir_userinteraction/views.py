@@ -12,13 +12,38 @@ from rest_framework.permissions import IsAuthenticated
 from fir_api.permissions import IsIncidentHandler
 from fir_userinteraction.serializers import QuizSerializer
 from incidents.authorization.decorator import authorization_required
-from incidents.models import Incident
+from incidents.models import Incident, Comments, Label
 from .models import Quiz, QuizAnswer, QuizTemplate, model_updated
 
 FIELD_MAPPINGS = {
     'django.forms.BooleanField': {
         'on': True,
         'off': False
+    }
+}
+
+ALERT_CLASSES = {
+    'labels': {
+        'Opened': 'alert alert-info',
+        'Closed': 'alert alert-success',
+        'Info': 'alert alert-info',
+        'Monitor': 'alert alert-warning',
+        'Alerting': 'alert alert-success',
+        'Takedown': 'alert alert-warning',
+        'Investigation': 'alert alert-info',
+        'Abuse': 'alert alert-danger',
+        'Blocked': 'alert alert-danger'
+    },
+    'glyphs': {
+        'Opened': 'glyphicon glyphicon-plus',
+        'Closed': 'glyphicon glyphicon-remove',
+        'Info': 'glyphicon glyphicon-info-sign',
+        'Monitor': 'glyphicon glyphicon-eye-open',
+        'Alerting': 'glyphicon glyphicon-exclamation-sign',
+        'Takedown': 'glyphicon glyphicon-envelope',
+        'Investigation': 'glyphicon glyphicon-zoom-in',
+        'Abuse': 'glyphicon glyphicon-flag',
+        'Blocked': 'glyphicon glyphicon-alert'
     }
 }
 
@@ -106,7 +131,8 @@ def save_answers(request, quiz, question_groups, formsets):
             print('Created answer: {}'.format(str(answer)))
 
     quiz.is_answered = True
-    quiz.user = request.user
+    if request.user is not None:
+        quiz.user = request.user
     quiz.save()
     model_updated.send(sender=quiz.__class__, instance=quiz, request=request)
 
@@ -118,7 +144,8 @@ def render_quiz(request, quiz):
         for group in question_groups:
             formsets.append(build_form_from_template(group))
         return render(request, 'userinteraction/quiz-sets.html',
-                      {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': quiz})
+                      {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': quiz,
+                       'alert_classes': ALERT_CLASSES})
     else:
         # POST case
         validations = []
@@ -138,29 +165,43 @@ def render_quiz(request, quiz):
 
 
 def render_answered_quiz(request, quiz):
-    print('Rendering answered quiz')
     question_groups = quiz.template.question_groups.all()
     answers = QuizAnswer.objects.filter(quiz=quiz)
     formsets = []
     for group in question_groups:
         group_answers = answers.filter(question_group=group)
         answer_dict = {str(answer.question.id): answer.answer_value for answer in group_answers}
-        print(answer_dict)
         formsets.append(build_form_from_template(group, readonly=True, initial=answer_dict))
 
+    thanks_message = 'You are seeing a read-only view of the completed form!'
     return render(request, 'userinteraction/quiz-sets.html',
-                  {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': quiz,
-                   'thanks': 'This form is already answered, you are seeing a read-only view of the completed form.'})
+                  {'formsets': formsets,
+                   'names': map(lambda x: x.title, question_groups),
+                   'quiz': quiz,
+                   'comments': quiz.incident.comments_set.order_by('-date'),
+                   'thanks': thanks_message, 'alert_classes': ALERT_CLASSES})
 
 
-def get_or_create_quiz(incident):
+def get_incident_for_user(authorization_target, incident_id, request):
+    if authorization_target is None:
+        incident = get_object_or_404(
+            Incident.authorization.for_user(request.user, 'incidents.view_incidents'),
+            pk=incident_id)
+    else:
+        incident = authorization_target
+    return incident
+
+
+def get_or_create_quiz(request, incident):
     try:
         user_quiz = Quiz.objects.get(incident_id=incident.id)
     except Quiz.DoesNotExist:
         template = get_object_or_404(QuizTemplate, category=incident.category)
-        user_quiz = Quiz.objects.create(template=template, incident=incident)
+        user_quiz = Quiz.objects.create(template=template, incident=incident, user=request.user)
     return user_quiz
 
+
+# ================================================================================ HTTP VIEWS FROM HERE ON
 
 @require_http_methods(['GET', 'POST'])
 def get_quiz_by_id(request, id):
@@ -178,28 +219,43 @@ def get_quiz_by_id(request, id):
 @login_required
 @authorization_required('incidents.view_incidents', Incident, view_arg='incident_id')
 def get_quiz_by_incident(request, incident_id, authorization_target=None):
-    if authorization_target is None:
-        incident = get_object_or_404(
-            Incident.authorization.for_user(request.user, 'incidents.view_incidents'),
-            pk=incident_id)
-    else:
-        incident = authorization_target
+    incident = get_incident_for_user(authorization_target, incident_id, request)
 
-    quiz = get_or_create_quiz(incident)
+    quiz = get_or_create_quiz(request, incident)
     answered = quiz.is_answered
-    if answered and request.method == 'POST':
-        return HttpResponse(status=400, content='This form has already been filled in!!')
-    if answered is False:
-        return render_quiz(request, quiz)
-    else:
+    if answered is True:
         return render_answered_quiz(request, quiz)
+    return render_quiz(request, quiz)
 
 
 @require_http_methods(['GET'])
 @login_required
 def show_all_quizzes(request):
     user_quizzes = Quiz.objects.filter(user=request.user)
-    return render(request, 'userinteraction/quiz-list.html', {'quizzes': user_quizzes})
+
+    opened = user_quizzes.filter(incident__status='O').order_by('-incident__severity', '-incident__date')
+    blocked = user_quizzes.filter(incident__status='B').order_by('-incident__severity', '-incident__date')
+    closed = user_quizzes.filter(incident__status='C').order_by('-incident__date', '-incident__severity')
+    return render(request, 'userinteraction/quiz-list.html', {
+        'opened': opened,
+        'blocked': blocked,
+        'closed': closed
+    })
+
+
+@require_http_methods(['POST'])
+@login_required
+@authorization_required('incidents.view_incidents', Incident, view_arg='incident_id')
+def comment_on_quiz(request, incident_id, authorization_target=None):
+    quiz = get_object_or_404(Quiz, incident_id=incident_id)
+    comment = request.POST['comment']
+    if comment:
+        Comments.objects.create(incident=quiz.incident,
+                                comment=comment,
+                                action=Label.objects.get(name='Alerting', group__name='action'),
+                                opened_by=request.user)
+
+    return redirect('userinteraction:quiz-by-incident', incident_id=incident_id)
 
 
 # API related stuff

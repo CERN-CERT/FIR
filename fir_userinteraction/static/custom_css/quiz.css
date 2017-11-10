@@ -21,9 +21,15 @@ textarea {
 }*/
 
 .quiz-title {
-    color: #47749E !important;
+    color: #47749E ;
 }
 
 .activity-details {
-    color: #5A93C9 !important;
+    color: #5A93C9;
+}
+
+
+.user-display {
+    font-size: 24px;
+    padding: 3px;
 }

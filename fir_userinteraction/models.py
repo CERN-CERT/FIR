@@ -85,9 +85,8 @@ def create_comment_for_answered_quiz(sender, instance, request, **kwargs):
     quiz_url = request.build_absolute_uri()
     full_user = '{}@{}'.format(str(user), str(ip))
 
-    print('Got a comment!!!')
     Comments.objects.create(incident=instance.incident,
-                            comment='A quiz has been answered: {}.\n The user that commented is: {}'.format(
+                            comment='An incident form has been filled in: {}.\n The user that commented is: {}'.format(
                                 quiz_url,
                                 full_user),
                             action=Label.objects.get(name='Alerting', group__name='action'),

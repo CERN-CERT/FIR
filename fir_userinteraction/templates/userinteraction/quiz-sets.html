@@ -1,10 +1,11 @@
-{% extends "base.html" %}
+{% extends "userinteraction/base_user_interaction.html" %}
 {% load bootstrap %}
 {% load add_css_class %}
 {% load i18n %}
 {% load staticfiles %}
 {% load fir_plugins %}
 {% load index %}
+{% load gethash %}
 
 {% block custom_css %}
 <link href="{% static 'custom_css/quiz.css' %}" rel="stylesheet">
@@ -13,11 +14,13 @@
 <div class="container">
     <div class="row">
         <div class="col-md-10 col-md-push-1">
-
-            {% if thanks %}
-            <div class="alert alert-info"><p>{{thanks}}</p></div>
-            <hr>
-            {% endif %}
+            <form action="{% url 'userinteraction:all-quizzes' %}" role="form" class="form-vertical" method="get">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-lg"><i class="glyphicon glyphicon-arrow-left"></i>
+                        Go to incidents list
+                    </button>
+                </div>
+            </form>
 
             {% if quiz %}
             <h1 class="quiz-title">What has been detected?</h1>
@@ -25,33 +28,72 @@
                 indication that your
                 device has been infected, broken into and compromized.</p>
 
-
-            <h2>Incident: <b>{{ quiz.incident }}, </b>ID: <b>{{quiz.incident.id}}</b></h2>
+            {% if thanks %}
+            <div class="alert alert-info"><p>{{thanks}}</p></div>
+            {% endif %}
+            <h2>Incident:<a href="{% url 'incidents:details' quiz.incident_id %}"> <b>{{ quiz.incident }}</b></a></h2>
             <h2>Category: <b>{{ quiz.template.category }}</b></h2>
-            <h2>Quiz template name: <b>{{ quiz.template.name }}</b></h2>
-            <h2>Answered: <b>{{ quiz.is_answered }}</b></h2>
 
             <hr>
             <h2 class="activity-details">Activity details: </h2>
-            <div class="well">
+            <div class="well well-lg">
                 {{quiz.incident.description}}
             </div>
 
             <hr>
             {% endif %}
 
-            <form action="{% url 'userinteraction:quiz' quiz.id %}" role="form" class="form-vertical" method="post">
-                {% csrf_token %}
-                {% for form in formsets %}
-                <legend class="quiz-title">{{names | index:forloop.counter}}</legend>
-                {{form|bootstrap }}
-                {% endfor %}
-                {% if quiz.is_answered == False %}
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary">Submit</button>
+            {% if quiz.is_answered %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Incident form
+                            response</a>
+                    </h4>
                 </div>
-                {% endif %}
-            </form>
+                <div id="collapseOne" class="panel-collapse collapse">
+                    <div class="panel-body">
+                        <div class="alert alert-warning">The user that completed the quiz is:
+                            <b class="user-display">
+                                {% if quiz.user %}
+                                {{quiz.user}}
+                                {% else %}
+                                An anonymous user
+                                {% endif %}
+                            </b>
+                        </div>
+                        {% endif %}
+                        <form action="{% url 'userinteraction:quiz' quiz.id %}" role="form" class="form-vertical"
+                              method="post">
+                            {% csrf_token %}
+                            {% for form in formsets %}
+                            <legend class="quiz-title">{{names | index:forloop.counter}}</legend>
+                            {{form|bootstrap }}
+                            {% endfor %}
+                            {% if quiz.is_answered == False %}
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </div>
+                            {% endif %}
+                        </form>
+
+                        {% if quiz.is_answered %}
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">Comments</a>
+                    </h4>
+                </div>
+                <div id="collapseTwo" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                        {% include 'userinteraction/widgets/user-comments.html' with comments=comments quiz=quiz %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
