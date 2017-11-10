@@ -2,6 +2,7 @@ from importlib import import_module
 
 from django import forms
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.forms.utils import ErrorDict
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -228,18 +229,26 @@ def get_quiz_by_incident(request, incident_id, authorization_target=None):
     return render_quiz(request, quiz)
 
 
+def get_quizzes_from_incidents(incidents):
+    return map(lambda x: x.quiz, incidents)
+
+
 @require_http_methods(['GET'])
 @login_required
 def show_all_quizzes(request):
     user_quizzes = Quiz.objects.filter(user=request.user)
 
-    opened = user_quizzes.filter(incident__status='O').order_by('-incident__severity', '-incident__date')
-    blocked = user_quizzes.filter(incident__status='B').order_by('-incident__severity', '-incident__date')
-    closed = user_quizzes.filter(incident__status='C').order_by('-incident__date', '-incident__severity')
+    permissions = 'incidents.view_incidents'
+    incident_list = Incident.authorization.for_user(request.user, permissions).filter(~Q(quiz=None))
+
+    opened = incident_list.filter(status='O').order_by('-severity', '-date')
+    blocked = incident_list.filter(status='B').order_by('-severity', '-date')
+    closed = incident_list.filter(status='C').order_by('-date', '-severity')
+
     return render(request, 'userinteraction/quiz-list.html', {
-        'opened': opened,
-        'blocked': blocked,
-        'closed': closed
+        'opened': get_quizzes_from_incidents(opened),
+        'blocked': get_quizzes_from_incidents(blocked),
+        'closed': get_quizzes_from_incidents(closed)
     })
 
 
