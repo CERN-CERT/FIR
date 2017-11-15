@@ -4,11 +4,18 @@
         <li class="list-group-item">
             <h4>Event: <a href="{% url 'userinteraction:quiz' quiz.id %}">{{quiz.incident}}</a></h4>
 
-            <span><b>Category:</b> {{quiz.template.category}} | <b>Answered:</b> {{quiz.is_answered}}</span>
+            <span><b>Category:</b> {{quiz.template.category}} | <b>Answered:</b>
+                {% if quiz.is_answered %}
+                    <span class="badge threatcon-1" style="float: none !important">{{quiz.is_answered}}</span>
+                {% else %}
+                    <span class="badge threatcon-4" style="float: none !important">{{quiz.is_answered}}</span>
+                {% endif %}
+
+            </span>
 
 
             <span class="badge">Date opened: {{quiz.incident.date | date:"Y-m-d H:i:s"}}</span>
-            <span class="badge threatcon-{{quiz.incident.severity}}">Severity: {{quiz.incident.severity}}</span>
+            <span class="badge threatcon-{{quiz.incident.severity}}"> Severity:{{quiz.incident.severity}}           </span>
         </li>
         {% endfor %}
     </ul>

@@ -44,7 +44,7 @@ ALERT_CLASSES = {
         'Takedown': 'glyphicon glyphicon-envelope',
         'Investigation': 'glyphicon glyphicon-zoom-in',
         'Abuse': 'glyphicon glyphicon-flag',
-        'Blocked': 'glyphicon glyphicon-alert'
+        'Blocked': 'glyphicon glyphicon-ban-circle'
     }
 }
 
