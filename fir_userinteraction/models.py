@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.dispatch import Signal, receiver
 from ipware.ip import get_ip
 from incidents.models import Incident, IncidentCategory, Comments, Label
@@ -30,9 +31,25 @@ class Question(models.Model):
         return self.label
 
 
+class QuizGroupQuestionOrder(models.Model):
+    question = models.ForeignKey('Question', on_delete=models.CASCADE)
+    question_group = models.ForeignKey('QuestionGroup', on_delete=models.CASCADE)
+    order_index = models.IntegerField(validators=[
+        MaxValueValidator(100),
+        MinValueValidator(1)
+    ])
+
+    def __str__(self):
+        return '{} - [QG: {}] - [{}]'.format(self.order_index, self.question_group.title, self.question)
+
+    class Meta:
+        ordering = ['-order_index']
+
+
 class QuestionGroup(models.Model):
     required = models.BooleanField(default=True)
-    questions = models.ManyToManyField(Question, verbose_name='list of questions in this group')
+    questions = models.ManyToManyField(Question, through='QuizGroupQuestionOrder',
+                                       verbose_name='list of questions in this group')
     title = models.CharField(max_length=500)
 
     def __str__(self):

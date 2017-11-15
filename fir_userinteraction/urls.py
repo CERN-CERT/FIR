@@ -2,10 +2,12 @@ from django.conf.urls import url, include
 from rest_framework import routers
 
 import views
+import api
 
 # API stuff
 router = routers.DefaultRouter(trailing_slash=False)
-router.register(r'quizzes', views.QuizViewSet)
+router.register(r'forms', api.QuizViewSet)
+router.register(r'formtemplates', api.QuizTemplatesViewSet)
 
 urlpatterns = [
     # See https://stackoverflow.com/a/18359032 for the Regex explanation

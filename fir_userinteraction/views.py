@@ -86,17 +86,34 @@ def build_form_from_questions(questions, form_id, readonly):
     form_fields = {}
     for field in fields:
         form_fields[field['id']] = field['field']
-    # form_fields['quiz_type'] = forms.CharField(widget=forms.HiddenInput(), required=False, initial=str(quiz_type))
     return build_dynamic_form(form_fields, form_id=form_id, get_class=True)
+
+
+def get_ordering_fields(question_group):
+    """
+    Get the fields on which to order the formsets
+
+    :param question_group: The question group from the database, containing all the orderings
+    :return: a list of the order of the fields in the form
+    """
+    orderings = list(question_group.quizgroupquestionorder_set.all().order_by('order_index'))
+    ordering_fields = []
+    for ordering in orderings:
+        ordering_fields.append(str(ordering.question.id))
+    return ordering_fields
 
 
 def build_form_from_template(question_group, request=None, readonly=False, initial=None):
     questions = question_group.questions.all()
     form_class = build_form_from_questions(questions, question_group.id, readonly)
+
     if not request:
-        return form_class(prefix='{}'.format(str(question_group.id)), initial=initial)
+        built = form_class(prefix='{}'.format(str(question_group.id)), initial=initial)
     else:
-        return form_class(request.POST, prefix='{}'.format(str(question_group.id)), initial=initial)
+        built = form_class(request.POST, prefix='{}'.format(str(question_group.id)), initial=initial)
+
+    built.order_fields(get_ordering_fields(question_group))
+    return built
 
 
 def extract_form_answers(question_group, formset):
@@ -123,7 +140,7 @@ def validate_formset(question_group, formset):
 
 
 def save_answers(request, quiz, question_groups, formsets):
-    for i in xrange(len(question_groups)):
+    for i in range(len(question_groups)):
         group = question_groups[i]
         answers = extract_form_answers(group, formsets[i])
         for k, v in answers.iteritems():
@@ -264,12 +281,3 @@ def comment_on_quiz(request, incident_id, authorization_target=None):
 
     return redirect('userinteraction:quiz-by-incident', incident_id=incident_id)
 
-
-# API related stuff
-class QuizViewSet(viewsets.ModelViewSet):
-    queryset = Quiz.objects.all()
-    serializer_class = QuizSerializer
-    permission_classes = (IsAuthenticated, IsIncidentHandler)
-
-    class Meta:
-        fields = '__all__'
