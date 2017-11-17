@@ -47,11 +47,23 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">Comments</a>
+                    </h4>
+                </div>
+                <div id="collapseTwo" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                        {% include 'userinteraction/widgets/user-comments.html' with comments=comments quiz=quiz %}
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
                         <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Incident form
                             response</a>
                     </h4>
                 </div>
-                <div id="collapseOne" class="panel-collapse collapse">
+                <div id="collapseOne" class="panel-collapse collapse in">
                     <div class="panel-body">
                         <div class="alert alert-warning">The user that completed the quiz is:
                             <b class="user-display">
@@ -78,18 +90,6 @@
                         </form>
 
                         {% if quiz.is_answered %}
-                    </div>
-                </div>
-            </div>
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">
-                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">Comments</a>
-                    </h4>
-                </div>
-                <div id="collapseTwo" class="panel-collapse collapse in">
-                    <div class="panel-body">
-                        {% include 'userinteraction/widgets/user-comments.html' with comments=comments quiz=quiz %}
                     </div>
                 </div>
             </div>
