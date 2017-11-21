@@ -4,7 +4,6 @@ from fir_userinteraction.models import Quiz, QuizTemplate
 
 
 class QuizSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Quiz
         fields = ('id', 'incident', 'template', 'answers', 'is_answered')
@@ -12,8 +11,21 @@ class QuizSerializer(serializers.ModelSerializer):
 
 
 class QuizTemplateSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = QuizTemplate
         fields = '__all__'
         read_only_fields = ['id']
+
+
+class EmailSerializer(serializers.Serializer):
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+    emails = serializers.ListField(
+        child=serializers.CharField(allow_null=False)
+    )
+    incident_id = serializers.IntegerField(allow_null=False)
+    authorized = serializers.BooleanField()

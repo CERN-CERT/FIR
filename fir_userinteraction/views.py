@@ -2,6 +2,8 @@ from importlib import import_module
 
 from django import forms
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, AnonymousUser
+from django.core.mail import send_mail
 from django.db.models import Q
 from django.forms.utils import ErrorDict
 from django.http import HttpResponse
@@ -149,7 +151,7 @@ def save_answers(request, quiz, question_groups, formsets):
             print('Created answer: {}'.format(str(answer)))
 
     quiz.is_answered = True
-    if request.user is not None:
+    if request.user is not None and not isinstance(request.user, AnonymousUser):
         quiz.user = request.user
     quiz.save()
     model_updated.send(sender=quiz.__class__, instance=quiz, request=request)
