@@ -64,19 +64,15 @@ def group_extraction_fct(request, user, group_json):
 
     user_bl = get_or_create_user_bl(user.username)
     groups_bl = get_or_create_groups_bl()
-    to_add_ace = [user_bl]
-
-    print('User bl: {}'.format(user_bl))
-
     user_bl_acl = user_acls.filter(business_line__name=user.username)
     if not user_bl_acl:
         AccessControlEntry.objects.create(user=user, role=incident_viewers_role, business_line=user_bl)
-    for ldap_group in ldap_group_names:
-        existing_permission = user_acls.filter(business_line__name=ldap_group)
-        if not existing_permission:
-            child_bl = groups_bl.add_child(name=ldap_group)
-            ace = AccessControlEntry.objects.create(user=user, role=incident_viewers_role, business_line=child_bl)
-            print('Created ace: {}'.format(ace))
+    # for ldap_group in ldap_group_names:
+    #     existing_permission = user_acls.filter(business_line__name=ldap_group)
+    #     if not existing_permission:
+    #         child_bl = groups_bl.add_child(name=ldap_group)
+    #         ace = AccessControlEntry.objects.create(user=user, role=incident_viewers_role, business_line=child_bl)
+    #         print('Created ace: {}'.format(ace))
 
     user.save()
 
