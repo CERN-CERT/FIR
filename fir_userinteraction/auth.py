@@ -76,7 +76,7 @@ def group_extraction_fct(request, user, group_json):
 
     user.save()
 
-    to_remove_filter = reduce(operator.and_, (~Q(business_line__name=x) for x in ldap_group_names))
+    to_remove_filter = reduce(operator.and_, (~Q(business_line__name=x) for x in ldap_group_names)) & ~Q(business_line=user_bl)
     to_remove_acls = user_acls.filter(to_remove_filter)
     for acl in to_remove_acls:
         acl.delete()
