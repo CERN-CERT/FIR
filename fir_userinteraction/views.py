@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.forms.utils import ErrorDict
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
@@ -79,7 +80,7 @@ def build_form_field(question, readonly):
     if question.widget_type:
         widget_type = import_from_module(question.widget_type)
     field_dict['id'] = str(question.id)
-    field_dict['field'] = field_type(widget=widget_type, label=question.label, required=False, disabled=readonly)
+    field_dict['field'] = field_type(widget=widget_type, label=mark_safe(question.label), required=False, disabled=readonly)
     return field_dict
 
 

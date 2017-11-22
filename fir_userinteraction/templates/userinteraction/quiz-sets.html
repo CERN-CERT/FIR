@@ -26,7 +26,7 @@
             <h1 class="quiz-title">What has been detected?</h1>
             <p>CERN computer security checks have detected malicious activity on your device. This is a strong
                 indication that your
-                device has been infected, broken into and compromized.</p>
+                device has been infected, broken into and compromised.</p>
 
             {% if thanks %}
             <div class="alert alert-info"><p>{{thanks}}</p></div>
@@ -80,7 +80,7 @@
                             {% csrf_token %}
                             {% for form in formsets %}
                             <legend class="quiz-title">{{names | index:forloop.counter}}</legend>
-                            {{form|bootstrap }}
+                            {{form | bootstrap}}
                             {% endfor %}
                             {% if quiz.is_answered == False %}
                             <div class="form-group">
