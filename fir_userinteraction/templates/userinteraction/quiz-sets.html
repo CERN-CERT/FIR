@@ -8,12 +8,14 @@
 {% load gethash %}
 
 {% block custom_css %}
-<link href="{% static 'custom_css/quiz.css' %}" rel="stylesheet">
+<link href="{% static 'userinteraction/custom_css/quiz.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
 <div class="container">
     <div class="row">
-        <div class="col-md-10 col-md-push-1">
+        <div class="col-md-12">
+
+
             <form action="{% url 'userinteraction:all-quizzes' %}" role="form" class="form-vertical" method="get">
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary btn-lg"><i class="glyphicon glyphicon-arrow-left"></i>
@@ -23,77 +25,92 @@
             </form>
 
             {% if quiz %}
-            <h1 class="quiz-title">What has been detected?</h1>
-            <p>CERN computer security checks have detected malicious activity on your device. This is a strong
-                indication that your
-                device has been infected, broken into and compromised.</p>
-
-            {% if thanks %}
-            <div class="alert alert-info"><p>{{thanks}}</p></div>
-            {% endif %}
-            <h2>Incident:<a href="{% url 'incidents:details' quiz.incident_id %}"> <b>{{ quiz.incident }}</b></a></h2>
-            <h2>Category: <b>{{ quiz.template.category }}</b></h2>
-
-            <hr>
-            <h2 class="activity-details">Activity details: </h2>
-            <div class="well well-lg">
-                {{ quiz.incident.description | safe | linebreaks}}
-            </div>
-
-            <hr>
-            {% endif %}
-
-            {% if quiz.is_answered %}
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">
-                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">Comments</a>
-                    </h4>
-                </div>
-                <div id="collapseTwo" class="panel-collapse collapse in">
-                    <div class="panel-body">
-                        {% include 'userinteraction/widgets/user-comments.html' with comments=comments quiz=quiz %}
+            <div class="container-fluid">
+                <div class="row-fluid">
+                    <div class="col-md-12">
+                        <img src="{% static 'userinteraction/img/logo.jpg' %}" style="max-width: 100px; float: left; display: inline-block; margin-right: 10px; padding: 10px">
+                        <h1 class="quiz-title">What has been detected?</h1>
                     </div>
                 </div>
-            </div>
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">
-                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Incident form
-                            response</a>
-                    </h4>
+                <div class="row-fluid">
+                    <div class="col-md-12">
+                        <p>CERN computer security checks have detected malicious activity on your device. This is a strong
+                    indication that your
+                    device has been infected, broken into and compromised.</p>
+
+                    {% if thanks %}
+                    <div class="alert alert-info"><p>{{thanks}}</p></div>
+                    {% endif %}
+                    <h2>Incident:<a href="{% url 'incidents:details' quiz.incident_id %}"> <b>{{ quiz.incident }}</b></a></h2>
+                    <h2>Category: <b>{{ quiz.template.category }}</b></h2>
+
+                    </div>
                 </div>
-                <div id="collapseOne" class="panel-collapse collapse in">
-                    <div class="panel-body">
-                        <div class="alert alert-warning">The user that completed the form is:
-                            <b class="user-display">
-                                {% if quiz.user %}
-                                {{quiz.user}}
-                                {% else %}
-                                An anonymous user
-                                {% endif %}
-                            </b>
+                </div>
+
+            <div class="row-fluid">
+                <div class="col-md-12">
+                <h2 class="activity-details">Activity details: </h2>
+                <div class="well well-lg">
+                    {{ quiz.incident.description | safe | linebreaks}}
+                </div>
+
+                <hr>
+                {% endif %}
+
+                {% if quiz.is_answered %}
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">Comments</a>
+                        </h4>
+                    </div>
+                    <div id="collapseTwo" class="panel-collapse collapse in">
+                        <div class="panel-body">
+                            {% include 'userinteraction/widgets/user-comments.html' with comments=comments quiz=quiz %}
                         </div>
-                        {% endif %}
-                        <form action="{% url 'userinteraction:quiz' quiz.id %}" role="form" class="form-vertical"
-                              method="post">
-                            {% csrf_token %}
-                            {% for form in formsets %}
-                            <legend class="quiz-title">{{names | index:forloop.counter}}</legend>
-                            {{form | bootstrap}}
-                            {% endfor %}
-                            {% if quiz.is_answered == False %}
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </div>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Incident form
+                                response</a>
+                        </h4>
+                    </div>
+                    <div id="collapseOne" class="panel-collapse collapse in">
+                        <div class="panel-body">
+                            <div class="alert alert-warning">The user that completed the form is:
+                                <b class="user-display">
+                                    {% if quiz.user %}
+                                    {{quiz.user}}
+                                    {% else %}
+                                    An anonymous user
+                                    {% endif %}
+                                </b>
                             </div>
                             {% endif %}
-                        </form>
+                            <form action="{% url 'userinteraction:quiz' quiz.id %}" role="form" class="form-vertical"
+                                  method="post">
+                                {% csrf_token %}
+                                {% for form in formsets %}
+                                <legend class="quiz-title">{{names | index:forloop.counter}}</legend>
+                                {{form | bootstrap}}
+                                {% endfor %}
+                                {% if quiz.is_answered == False %}
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </div>
+                                {% endif %}
+                            </form>
 
-                        {% if quiz.is_answered %}
+                            {% if quiz.is_answered %}
+                        </div>
                     </div>
                 </div>
+                {% endif %}
+                </div>
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
