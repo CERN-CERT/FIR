@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 # Register your models here.
-from fir_userinteraction.models import Question, Quiz, QuizTemplate, QuizAnswer, QuestionGroup, QuizGroupQuestionOrder
+from fir_userinteraction.models import Question, Quiz, QuizTemplate, QuizAnswer, QuestionGroup, QuizGroupQuestionOrder, \
+    QuizTemplateQuestionGroupOrder
 
 
 class QuizGroupQuestionOrderInline(admin.TabularInline):
@@ -10,12 +11,22 @@ class QuizGroupQuestionOrderInline(admin.TabularInline):
     extra = 1
 
 
+class QuizTemplateQuestionGroupOrderInline(admin.TabularInline):
+    model = QuizTemplateQuestionGroupOrder
+    ordering = ['order_index']
+    extra = 1
+
+
 class QuestionGroupAdmin(admin.ModelAdmin):
     inlines = (QuizGroupQuestionOrderInline,)
 
 
-admin.site.register(QuizTemplate)
+class QuizTemplateAdmin(admin.ModelAdmin):
+    inlines = (QuizTemplateQuestionGroupOrderInline,)
+
+
+admin.site.register(QuizTemplate, QuizTemplateAdmin)
+admin.site.register(QuestionGroup, QuestionGroupAdmin)
 admin.site.register(Quiz)
 admin.site.register(QuizAnswer)
-admin.site.register(QuestionGroup, QuestionGroupAdmin)
 admin.site.register(Question)

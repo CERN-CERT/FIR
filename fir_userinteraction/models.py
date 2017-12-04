@@ -46,6 +46,21 @@ class QuizGroupQuestionOrder(models.Model):
         ordering = ['-order_index']
 
 
+class QuizTemplateQuestionGroupOrder(models.Model):
+    quiz_template = models.ForeignKey('QuizTemplate', on_delete=models.CASCADE)
+    question_group = models.ForeignKey('QuestionGroup', on_delete=models.CASCADE)
+    order_index = models.IntegerField(validators=[
+        MaxValueValidator(100),
+        MinValueValidator(1)
+    ])
+
+    def __str__(self):
+        return '{} - [Quiz Template: {}] - [{}]'.format(self.order_index, self.quiz_template, self.question_group.title)
+
+    class Meta:
+        ordering = ['-order_index']
+
+
 class QuestionGroup(models.Model):
     required = models.BooleanField(default=True)
     questions = models.ManyToManyField(Question, through='QuizGroupQuestionOrder',
@@ -58,7 +73,8 @@ class QuestionGroup(models.Model):
 
 class QuizTemplate(models.Model):
     category = models.OneToOneField(IncidentCategory, on_delete=models.CASCADE)
-    question_groups = models.ManyToManyField(QuestionGroup, verbose_name='list of quiz groups')
+    question_groups = models.ManyToManyField(QuestionGroup, through='QuizTemplateQuestionGroupOrder',
+                                             verbose_name='list of quiz groups')
     name = models.CharField(max_length=100, help_text='Name of this specific quiz template')
 
     def __str__(self):

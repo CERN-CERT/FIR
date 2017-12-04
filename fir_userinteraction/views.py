@@ -80,7 +80,8 @@ def build_form_field(question, readonly):
     if question.widget_type:
         widget_type = import_from_module(question.widget_type)
     field_dict['id'] = str(question.id)
-    field_dict['field'] = field_type(widget=widget_type, label=mark_safe(question.label), required=False, disabled=readonly)
+    field_dict['field'] = field_type(widget=widget_type, label=mark_safe(question.label), required=False,
+                                     disabled=readonly)
     return field_dict
 
 
@@ -158,8 +159,13 @@ def save_answers(request, quiz, question_groups, formsets):
     model_updated.send(sender=quiz.__class__, instance=quiz, request=request)
 
 
+def get_ordered_question_groups(quiz):
+    return map(lambda x: x.question_group,
+               quiz.template.quiztemplatequestiongrouporder_set.all().order_by('order_index'))
+
+
 def render_quiz(request, quiz):
-    question_groups = quiz.template.question_groups.all()
+    question_groups = get_ordered_question_groups(quiz)
     formsets = []
     if request.method == 'GET':
         for group in question_groups:
@@ -186,7 +192,7 @@ def render_quiz(request, quiz):
 
 
 def render_answered_quiz(request, quiz):
-    question_groups = quiz.template.question_groups.all()
+    question_groups = get_ordered_question_groups(quiz)
     answers = QuizAnswer.objects.filter(quiz=quiz)
     formsets = []
     for group in question_groups:
@@ -283,4 +289,3 @@ def comment_on_quiz(request, incident_id, authorization_target=None):
                                 opened_by=request.user)
 
     return redirect('userinteraction:quiz-by-incident', incident_id=incident_id)
-
