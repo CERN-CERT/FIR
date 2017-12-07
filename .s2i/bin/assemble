@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Install needed packages
-yum -y install python-devel gcc libxml2 libxml2-devel libxslt libxslt-devel
-
 # Do the normal assemble step
 /usr/libexec/s2i/assemble
 
