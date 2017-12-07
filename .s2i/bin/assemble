@@ -1,9 +1,14 @@
 #!/bin/bash
 
-# Install the extra libs
-pip install -r ./fir_userinteraction/requirements.txt
-pip install -r requirements.txt
-pip install oauth2-sso
+# Install needed packages
+yum -y install python-devel gcc libxml2 libxml2-devel libxslt libxslt-devel
 
 # Do the normal assemble step
 /usr/libexec/s2i/assemble
+
+# Install the extra libs
+APP_HOME=${APP_HOME:-.}
+
+pip install -r $APP_HOME/fir_userinteraction/requirements.txt
+pip install oauth2-sso
+
