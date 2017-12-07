@@ -3,7 +3,7 @@
 
 # Do pip install stuff
 pip install -U pip
-CFLAGS="-O0"  pip install lxml==3.4.2
+CFLAGS="-O0"  pip install lxml
 
 # Do the normal assemble step
 /usr/libexec/s2i/assemble
