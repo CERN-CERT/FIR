@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Install the extra libs
+pip install ./fir_userinteraction/requirements.txt
+pip install oauth2-sso
+
+# Do the normal assemble step
+/usr/libexec/s2i/assemble
+
+
+python manage.py collectstatic --settings fir.config.production

@@ -1,0 +1,7 @@
+stages:
+  - deploy
+
+redeploy_in_openshift:
+  stage: deploy
+  image: gitlab-registry.cern.ch/paas-tools/openshift-client
+  script: "oc start-build fir --namespace test-fir-openshift --server https://openshift-dev.cern.ch --token $OPENSHIFT_DEPLOYMENT_TOKEN"
