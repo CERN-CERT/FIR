@@ -1,9 +1,11 @@
 #!/bin/bash
 
 # Run migrations and such before the app
+python -m SimpleHTTPServer 8000
+
 python manage.py collectstatic --settings fir.config.production --noinput
 python manage.py migrate --settings fir.config.production
 
 # TODO replace with this one
 #gunicorn --workers 3 --bind 0.0.0.0:8080 fir.wsgi:application
-python manage.py migrate --settings fir.config.production
+#python manage.py runserver --settings fir.config.production
