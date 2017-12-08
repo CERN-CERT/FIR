@@ -5,7 +5,4 @@ python manage.py collectstatic --settings fir.config.production --noinput
 python manage.py migrate --settings fir.config.production
 
 # TODO replace with one from here
-#gunicorn --workers 3 --bind 0.0.0.0:8080 fir.wsgi:application
-#python manage.py runserver --settings fir.config.production
-
-python -m SimpleHTTPServer 8000
+gunicorn --workers 3 --bind 0.0.0.0:8080 fir.wsgi:application
