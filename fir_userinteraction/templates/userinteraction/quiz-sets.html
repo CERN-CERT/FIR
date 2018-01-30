@@ -43,7 +43,7 @@
                     {% if thanks %}
                     <div class="alert alert-info"><p>{{thanks}}</p></div>
                     {% endif %}
-                    <h2>Incident:<a href="{% url 'incidents:details' quiz.incident_id %}"> <b>{{ quiz.incident }}</b></a></h2>
+                    <h2>Incident:<b>{{ quiz.incident }}</b></h2>
                     <h2>Category: <b>{{ quiz.template.category }}</b></h2>
 
                     </div>
