@@ -105,6 +105,9 @@ def subscribe_to_watchlist(request):
             'protocol': serializer.validated_data['protocol'],
             'incident_url': build_userinteraction_path(request, qz.incident_id)
         }
+        inc = qz.incident
+        inc.status = 'B'
+        inc.save()
         watchlist_updated.send(sender=qz.__class__, instance=qz, extra_data=extra_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

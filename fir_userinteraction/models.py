@@ -189,6 +189,9 @@ def notify_watchers(quiz, incident, watchlist, type, extra_data={}):
 
             subject_rendered = Template(cat_template.subject).render(c)
             body_rendered = Template(cat_template.body).render(c)
+            inc = quiz.incident
+            inc.status = 'O'
+            inc.save()
 
             send_mail(subject_rendered, message='Automatic mail generation', html_message=body_rendered,
                       from_email='noreply@cern.ch',
