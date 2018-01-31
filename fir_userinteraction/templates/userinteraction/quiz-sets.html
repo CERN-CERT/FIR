@@ -18,11 +18,12 @@
 
             <form action="{% url 'userinteraction:all-quizzes' %}" role="form" class="form-vertical" method="get">
                 <div class="form-group">
-                    <button type="submit" class="btn btn-primary btn-lg"><i class="glyphicon glyphicon-arrow-left"></i>
-                        Go to incidents list
+                    <button type="submit" class="btn btn-primary"><i class="glyphicon glyphicon-arrow-left"></i>
+                        Go back to incidents list
                     </button>
                 </div>
             </form>
+            <hr>
 
             {% if quiz %}
             <div class="container-fluid">
@@ -36,9 +37,8 @@
                 </div>
                 <div class="row-fluid">
                     <div class="col-md-12">
-                        <p>CERN computer security checks have detected malicious activity on your device. This is a strong
-                    indication that your
-                    device has been infected, broken into and compromised.</p>
+                        <p>CERN computer security checks have malicious or suspicious activity on your device.
+                        See the details below for more information and please fill out the questions.</p>
 
                     {% if thanks %}
                     <div class="alert alert-info"><p>{{thanks}}</p></div>
@@ -47,7 +47,6 @@
                     <h2>Category: <b>{{ quiz.template.category }}</b></h2>
 
                     </div>
-                </div>
                 </div>
 
             <div class="row-fluid">
@@ -112,6 +111,7 @@
                 </div>
                 {% endif %}
                 </div>
+            </div>
             </div>
         </div>
     </div>

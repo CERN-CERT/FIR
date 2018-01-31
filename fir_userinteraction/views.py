@@ -34,6 +34,7 @@ ALERT_CLASSES = {
         'Monitor': 'alert alert-warning',
         'Alerting': 'alert alert-success',
         'Takedown': 'alert alert-warning',
+        'User Answered': 'alert alert-success',
         'Investigation': 'alert alert-info',
         'Abuse': 'alert alert-danger',
         'Blocked': 'alert alert-danger'
@@ -45,6 +46,7 @@ ALERT_CLASSES = {
         'Monitor': 'glyphicon glyphicon-eye-open',
         'Alerting': 'glyphicon glyphicon-exclamation-sign',
         'Takedown': 'glyphicon glyphicon-envelope',
+        'User Answered': 'glyphicon glyphicon-envelope',
         'Investigation': 'glyphicon glyphicon-zoom-in',
         'Abuse': 'glyphicon glyphicon-flag',
         'Blocked': 'glyphicon glyphicon-ban-circle'

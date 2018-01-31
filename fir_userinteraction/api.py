@@ -16,8 +16,11 @@ from rest_framework.response import Response
 from fir_api.permissions import IsIncidentHandler
 from fir_plugins.links import Links
 from fir_plugins.templatetags import markdown
-from fir_userinteraction.models import Quiz, QuizTemplate
-from fir_userinteraction.serializers import QuizSerializer, QuizTemplateSerializer, EmailSerializer
+from fir_userinteraction.models import Quiz, QuizTemplate, QuizWatchListItem, watchlist_updated, \
+    build_userinteraction_path
+from fir_userinteraction.serializers import QuizSerializer, QuizTemplateSerializer, EmailSerializer, \
+    QuizWatchListItemSerializer, WatchlistSerializer
+from incidents.models import model_created
 
 
 class QuizViewSet(viewsets.ModelViewSet):
@@ -32,6 +35,12 @@ class QuizViewSet(viewsets.ModelViewSet):
 class QuizTemplatesViewSet(viewsets.ModelViewSet):
     queryset = QuizTemplate.objects.all()
     serializer_class = QuizTemplateSerializer
+    permission_classes = (IsAuthenticated, IsIncidentHandler)
+
+
+class QuizWatchListItemViewSet(viewsets.ModelViewSet):
+    queryset = QuizWatchListItem.objects.all()
+    serializer_class = QuizWatchListItemSerializer
     permission_classes = (IsAuthenticated, IsIncidentHandler)
 
 
@@ -78,3 +87,25 @@ def send_account_emails(request):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def subscribe_to_watchlist(request):
+    serializer = WatchlistSerializer(data=request.data)
+    if serializer.is_valid():
+        qz = Quiz.objects.get(id=serializer.validated_data['form_id'])
+        for mail in serializer.validated_data['emails']:
+            QuizWatchListItem.objects.create(email=mail, quiz=qz)
+
+        extra_data = {
+            'name': serializer.validated_data['name'],
+            'device': serializer.validated_data['device'],
+            'date': serializer.validated_data['date'],
+            'file': serializer.validated_data['file'],
+            'protocol': serializer.validated_data['protocol'],
+            'incident_url': build_userinteraction_path(request, qz.incident_id)
+        }
+        watchlist_updated.send(sender=qz.__class__, instance=qz, extra_data=extra_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

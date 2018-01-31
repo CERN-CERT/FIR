@@ -20,13 +20,13 @@
                 <img src="{% static 'userinteraction/img/logo.jpg' %}" style="max-width: 100px; float: left; display: inline-block; margin-right: 10px; padding: 10px">
             </a>
             <h1 class="quiz-title">
-                <span>Computer security incidents you are involved in:</span>
+                <span>CERN Computer Security incidents assigned to you:</span>
             </h1>
             <hr>
             <div class="panel panel-danger">
                 <div class="panel-heading">
                     <h4 class="panel-title">
-                        <a data-toggle="collapse" href="#collapseOne">Blocked</a>
+                        <a data-toggle="collapse" href="#collapseOne">Action required</a>
                         <span class="badge" style="float: right !important">Incidents: {{ blocked | length}}</span>
                     </h4>
                 </div>
@@ -37,7 +37,7 @@
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     <h4 class="panel-title">
-                        <a data-toggle="collapse" href="#collapseTwo">Opened</a>
+                        <a data-toggle="collapse" href="#collapseTwo">Ongoing</a>
                         <span class="badge" style="float: right !important">Incidents: {{ opened | length }}</span>
                     </h4>
                 </div>

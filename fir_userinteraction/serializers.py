@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from fir_userinteraction.models import Quiz, QuizTemplate
+from fir_userinteraction.models import Quiz, QuizTemplate, QuizWatchListItem
 
 
 class QuizSerializer(serializers.ModelSerializer):
@@ -17,6 +17,13 @@ class QuizTemplateSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class QuizWatchListItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuizWatchListItem
+        fields = '__all__'
+        read_only_fields = ['id']
+
+
 class EmailSerializer(serializers.Serializer):
     def create(self, validated_data):
         pass
@@ -29,3 +36,21 @@ class EmailSerializer(serializers.Serializer):
     )
     incident_id = serializers.IntegerField(allow_null=False)
     authorized = serializers.BooleanField()
+
+
+class WatchlistSerializer(serializers.Serializer):
+    def create(self, validated_data):
+        pass
+
+    def update(self, instance, validated_data):
+        pass
+
+    emails = serializers.ListField(
+        child=serializers.CharField(allow_null=False)
+    )
+    form_id = serializers.CharField(allow_null=False)
+    device = serializers.CharField(allow_null=False)
+    name = serializers.CharField(allow_null=False)
+    date = serializers.CharField(allow_null=False)
+    file = serializers.CharField(allow_null=False)
+    protocol = serializers.CharField(allow_null=False)

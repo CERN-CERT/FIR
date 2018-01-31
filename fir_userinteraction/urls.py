@@ -8,6 +8,7 @@ import api
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'forms', api.QuizViewSet)
 router.register(r'formtemplates', api.QuizTemplatesViewSet)
+router.register(r'formwatchlist', api.QuizWatchListItemViewSet)
 
 urlpatterns = [
     # See https://stackoverflow.com/a/18359032 for the Regex explanation
@@ -19,6 +20,7 @@ urlpatterns = [
     url(r'^comment/(?P<incident_id>[0-9]+)/$', views.comment_on_quiz, name='comment'),
     url(r'^api/', include(router.urls)),
     url(r'^api/email', api.send_account_emails, name='email-api'),
+    url(r'^api/watchlist', api.subscribe_to_watchlist, name='watchlist-api'),
     url(r'^$', views.show_all_quizzes, name='all-quizzes'),
     # OAuth endpoints for the standalone version
     url(r'^oauth/', include('oauth2_sso.urls'))
