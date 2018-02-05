@@ -1,7 +1,18 @@
 stages:
   - deploy
+  - deploy-userinteracion
 
-redeploy_in_openshift:
+deploy:
   stage: deploy
+  only:
+    - qa
   image: gitlab-registry.cern.ch/paas-tools/openshift-client
   script: "oc start-build fir --namespace test-fir-openshift --server https://openshift-dev.cern.ch --token $OPENSHIFT_DEPLOYMENT_TOKEN"
+
+
+deploy_ui:
+  stage: deploy-userinteracion
+  only:
+    - qa-userinteraction
+  image: gitlab-registry.cern.ch/paas-tools/openshift-client
+  script: "oc start-build fir --namespace cert-self-service --server https://openshift.cern.ch --token $CERT_SELF_SERVICE_DEPLOY_TOKEN"
