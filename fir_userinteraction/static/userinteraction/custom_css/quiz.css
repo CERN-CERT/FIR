@@ -24,12 +24,92 @@ textarea {
     color:  #0053A1;
 }
 
+.quiz-title-red {
+    color: #a94442;
+    font-size: 3.5em;
+}
+
+.quiz-title-red-small {
+    font-size: 2em;
+}
+
 .activity-details {
     color: #0053A1;
+}
+
+.activity-details-info {
+    background-color: white;
+}
+.cern-info-text {
+    font-size: 1.3em;
 }
 
 
 .user-display {
     font-size: 22px;
-    padding: 2px;
+}
+
+
+.badge.badge-ui {
+    background-color: white;
+    border: 1px solid black;
+    color: black;
+    font-weight: 100;
+    font-size: 1.2em;
+}
+
+.quiz-list-group {
+    margin: 0;
+}
+
+.incident-title {
+    font-size: 1.4em;
+}
+
+label>span {
+    font-size: 1.5em;
+}
+
+.quiz-title {
+    font-size: 2em;
+}
+
+.ui-sidebar {
+    width:18%;
+    font-family: Verdana;
+    font-size: 16px;
+    float:left;
+    margin-left:1%;
+}
+
+#sidebar {
+    background-color: white !important;
+}
+
+
+.content-holder {
+    width: 80%; float: left;
+}
+
+
+@media screen and (max-device-width: 767px) {
+    .content-holder {
+        width: 99% !important;
+    }
+
+    body {
+        padding-top: 0px;
+
+    }
+
+    .ui-sidebar {
+        width: 100%;
+        float: none;
+        margin-left: 0;
+        background-color: #E8E8E8;
+    }
+
+    .show-menu-btn {
+        background-color: #337ab7;
+    }
 }

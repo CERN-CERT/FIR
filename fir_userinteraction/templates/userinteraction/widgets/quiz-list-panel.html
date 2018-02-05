@@ -1,26 +1,16 @@
 <div class="panel-body">
-    <ul class="list-group">
+    <ul class="list-group quiz-list-group">
         {% for quiz in quizzes %}
         <li class="list-group-item">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-md-6">
-                        <h4><a href="{% url 'userinteraction:quiz-by-incident' quiz.incident_id %}">{{quiz.incident}}</a>
+                    <div class="col-lg-5 col-md-6 col-sm-7">
+                        <h4 class="incident-title"><a href="{% url 'userinteraction:quiz-by-incident' quiz.incident_id %}">{{quiz.incident}}</a>
                         </h4>
-                        <p><b>Category:</b> {{quiz.template.category}}</p>
-                        <p>
-                            <b>Action taken:</b>
-                            {% if quiz.is_answered %}
-                                <span class="badge threatcon-1" style="float: none !important">{{quiz.is_answered}}</span>
-                            {% else %}
-                                <span class="badge threatcon-4" style="float: none !important">{{quiz.is_answered}}</span>
-                            {% endif %}
-                            <br>
-                        </p>
                     </div>
-                    <div class="col-md-6">
-                        <p class="badge" style="float:right">Date opened: {{quiz.incident.date | date:"Y-m-d H:i:s"}}</p>
-                        <p class="badge threatcon-{{quiz.incident.severity}}" style="float: right;margin-right: 10px;"> Severity:{{quiz.incident.severity}}</p>
+                    <div class="col-lg-7 col-md-6 col-sm-5">
+                        <p class="badge badge-ui" style="float:right;margin-left:5px"><b>Date opened:</b> {{quiz.incident.date | date:"Y-m-d H:i:s"}}</p>
+                        <p class="badge badge-ui" style="float: right;"><b>Category:</b> {{quiz.template.category}}</p>
                     </div>
                 </div>
             </div>

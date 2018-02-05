@@ -11,78 +11,56 @@
 <link href="{% static 'userinteraction/custom_css/quiz.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
 
+{% include "userinteraction/widgets/sidebar.html" %}
+<div class="content-holder">
 
-            <form action="{% url 'userinteraction:all-quizzes' %}" role="form" class="form-vertical" method="get">
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary"><i class="glyphicon glyphicon-arrow-left"></i>
-                        Go back to incidents list
-                    </button>
-                </div>
-            </form>
-            <hr>
+    {% if quiz %}
+    <div class="container-fluid">
+        <div class="row-fluid">
+            <div class="col-md-12">
 
-            {% if quiz %}
-            <div class="container-fluid">
-                <div class="row-fluid">
-                    <div class="col-md-12">
-                        <a href="https://home.cern">
-                            <img src="{% static 'userinteraction/img/logo.jpg' %}" style="max-width: 100px; float: left; display: inline-block; margin-right: 10px; padding: 10px">
-                        </a>
-                        <h1 class="quiz-title">What has been detected?</h1>
-                    </div>
-                </div>
-                <div class="row-fluid">
-                    <div class="col-md-12">
-                        <p>CERN computer security checks have malicious or suspicious activity on your device.
-                        See the details below for more information and please fill out the questions.</p>
+                {% if thanks %}
+                <div class="well cern-info-text" style="font-weight: 300">{{thanks}}</div>
+                {% endif %}
+                <hr>
+                <h1 class="quiz-title-red">What has been detected?</h1>
+            </div>
+        </div>
+        <div class="row-fluid">
+            <div class="col-md-12">
+                <div class="cern-info-text">CERN computer security checks have malicious or suspicious activity on your device.
+                    See the details below for more information and please fill out the questions.</div>
 
-                    {% if thanks %}
-                    <div class="alert alert-info"><p>{{thanks}}</p></div>
-                    {% endif %}
-                    <h2>Incident:<b>{{ quiz.incident }}</b></h2>
-                    <h2>Category: <b>{{ quiz.template.category }}</b></h2>
+                <h2 class="quiz-title-red-small">Incident: <b>{{ quiz.incident }}</b></h2>
+                <h2 class="quiz-title-red-small">Category: <b>{{ quiz.template.category }}</b></h2>
 
-                    </div>
-                </div>
+            </div>
+        </div>
 
-            <div class="row-fluid">
-                <div class="col-md-12">
+        <div class="row-fluid">
+            <div class="col-md-12">
                 <h2 class="activity-details">Activity details: </h2>
-                <div class="well well-lg">
+                <div class="well well-lg cern-info-text activity-details-info">
                     {{ quiz.incident.description | safe | linebreaks}}
                 </div>
-
-                <hr>
+                <br>
                 {% endif %}
 
                 {% if quiz.is_answered %}
-                <div class="panel panel-default">
+                <div class="panel panel-default activity-details-info">
                     <div class="panel-heading">
                         <h4 class="panel-title">
-                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">Comments</a>
+                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Initial response</a>
                         </h4>
                     </div>
-                    <div id="collapseTwo" class="panel-collapse collapse in">
+                    <div id="collapseOne" class="panel-collapse collapse">
                         <div class="panel-body">
-                            {% include 'userinteraction/widgets/user-comments.html' with comments=comments quiz=quiz %}
-                        </div>
-                    </div>
-                </div>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">
-                            <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">Incident form
-                                response</a>
-                        </h4>
-                    </div>
-                    <div id="collapseOne" class="panel-collapse collapse in">
-                        <div class="panel-body">
-                            <div class="alert alert-warning">The user that completed the form is:
-                                <b class="user-display">
+
+                            {% endif %}
+                            {% if quiz.is_answered %}
+                            <div class="alert alert-info user-display">The user that completed the form is:
+                                <b>
                                     {% if quiz.user %}
                                     {{quiz.user}}
                                     {% else %}
@@ -91,8 +69,10 @@
                                 </b>
                             </div>
                             {% endif %}
-                            <form action="{% url 'userinteraction:quiz' quiz.id %}" role="form" class="form-vertical"
-                                  method="post">
+                            <br>
+                            <form action="{% url 'userinteraction:quiz' quiz.id %}" role="form"
+                                  class="form-vertical"
+                                  method="post" style="margin: 15px">
                                 {% csrf_token %}
                                 {% for form in formsets %}
                                 <legend class="quiz-title">{{names | index:forloop.counter}}</legend>
@@ -109,9 +89,21 @@
                         </div>
                     </div>
                 </div>
-                {% endif %}
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <a data-toggle="collapse" data-parent="#accordion"
+                               href="#collapseTwo"
+                               aria-expanded="false">Comments</a>
+                        </h4>
+                    </div>
+                    <div id="collapseTwo" class="panel-collapse collapse in">
+                        <div class="panel-body">
+                            {% include 'userinteraction/widgets/user-comments.html' with comments=comments quiz=quiz %}
+                        </div>
+                    </div>
                 </div>
-            </div>
+                {% endif %}
             </div>
         </div>
     </div>

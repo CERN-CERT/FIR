@@ -31,10 +31,8 @@
 
   <body>
 
-    <div class="container-fluid">
       {% block header %}{% endblock %}
       {% block content %}{% endblock %}
-    </div>
 
     <!-- Le javascript
     ================================================== -->
@@ -49,10 +47,5 @@
 
     {% block custom_js %}{% endblock %}
 
-    <footer class="hidden-xs">
-      <div>
-        FIR - Fast Incident Response - <a href='https://cert.societegenerale.com/'>CERT Soci&eacute;t&eacute; G&eacute;n&eacute;rale {% now "Y"%}</a> &copy; bug reports go to <a href='https://github.com/certsocietegenerale/FIR' target='blank'>the GitHub repository</a>
-      </div>
-    </footer>
   </body>
 </html>

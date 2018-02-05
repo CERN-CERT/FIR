@@ -1,0 +1,30 @@
+{% load static %}
+
+<nav class="navbar ui-sidebar">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle btn btn-primary show-menu-btn" data-toggle="collapse" data-target="#sidebar">
+                Show menu
+            </button>
+        </div>
+        <div class="collapse navbar-collapse " id="sidebar" role="navigation">
+                    <div style="height: 100px">
+                        <a href="https://home.cern">
+                            <img src="{% static 'userinteraction/img/logo.jpg' %}"
+                                 style="max-width: 100px; float: left; display: block; margin-right: 10px; padding: 10px">
+                        </a>
+                    </div>
+            <hr>
+            <ul class="nav nav-sidebar">
+
+                <li><a href="{% url 'userinteraction:all-quizzes' %}"><i class="glyphicon glyphicon-home"></i>
+                                Incidents list</a></li>
+                <li><a href="">Another nav item</a></li>
+                <li><a href="">More navigation</a></li>
+            </ul>
+
+        </div>
+    </div>
+
+    </div>
+</nav>
