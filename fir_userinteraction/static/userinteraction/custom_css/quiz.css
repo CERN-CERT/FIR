@@ -75,7 +75,6 @@ label>span {
 }
 
 .ui-sidebar {
-    width:18%;
     font-family: Verdana;
     font-size: 16px;
     float:left;
@@ -91,8 +90,18 @@ label>span {
     width: 80%; float: left;
 }
 
+body {
+    padding-top: 5px;
+}
 
-@media screen and (max-device-width: 767px) {
+@media screen and (min-width: 768px) and (max-width: 1320px) {
+    .content-holder {
+        width: 60%;
+    }
+
+}
+
+@media screen and (max-width: 767px) {
     .content-holder {
         width: 99% !important;
     }
