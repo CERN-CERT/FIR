@@ -1,26 +1,10 @@
-/*input {
-    display: block;
-}
-
-input[type=checkbox] {
-    float: left;
-    margin-right: 10px;
-}
-
-label {
-    width: 90%;
-}
-
-textarea {
-    display: block
-}
-
-.errorlist {
-    color: red;
-    font-weight: bold;
-}*/
-
 .quiz-title {
+    color:  #0053A1;
+    font-size: 4em;
+}
+
+.form-question-group {
+    text-transform: none;
     color:  #0053A1;
 }
 
@@ -42,13 +26,14 @@ textarea {
 }
 .cern-info-text {
     font-size: 1.3em;
+    text-transform: none;
 }
+
 
 
 .user-display {
     font-size: 22px;
 }
-
 
 .badge.badge-ui {
     background-color: white;
@@ -64,35 +49,54 @@ textarea {
 
 .incident-title {
     font-size: 1.4em;
+    text-transform: none;
+    margin-top: 2px;
+}
+
+.menu-header {
+    text-transform: none;
+    color: #0053A1;
+    font-weight: bold;
 }
 
 label>span {
     font-size: 1.5em;
 }
 
-.quiz-title {
-    font-size: 2em;
-}
 
 .ui-sidebar {
     font-family: Verdana;
     font-size: 16px;
     float:left;
-    margin-left:1%;
-    width: 18%;
+    width: 25%;
 }
 
-#sidebar {
-    background-color: white !important;
-}
 
 
 .content-holder {
-    width: 80%; float: left;
+    width: 75%; float: left;
 }
 
 body {
     padding-top: 5px;
+    background: url('/static/userinteraction/img/ui-background.png') 0px 0px repeat;
+}
+
+
+.incident-panel-head {
+    cursor: pointer;
+}
+.incident-panel-head>.panel-title{
+    cursor: pointer !important;
+    text-transform: none;
+}
+
+.badge-ui {
+    white-space: unset;
+}
+
+.cern-grey-panel {
+    background-color: #f5f5f5;
 }
 
 @media screen and (min-width: 768px) and (max-width: 1320px) {
@@ -105,6 +109,10 @@ body {
 @media screen and (max-width: 767px) {
     .content-holder {
         width: 99% !important;
+    }
+
+    #security-logo {
+        display: none;
     }
 
     body {
@@ -121,6 +129,14 @@ body {
 
     .show-menu-btn {
         background-color: #337ab7;
+    }
+
+    .quiz-title {
+        float: left;
+    }
+
+    .mobile-friendly {
+        float: left;
     }
 }
 

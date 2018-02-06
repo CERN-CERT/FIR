@@ -1,28 +1,22 @@
 {% load static %}
 
-<nav class="navbar ui-sidebar">
-    <div class="container-fluid">
+<nav class="navbar ui-sidebar cern-grey-panel">
+    <div class="container-fluid cern-grey-panel">
         <div class="navbar-header">
             <button type="button" class="navbar-toggle btn btn-primary show-menu-btn" data-toggle="collapse" data-target="#sidebar">
                 Show menu
             </button>
         </div>
-        <div class="collapse navbar-collapse " id="sidebar" role="navigation">
-                    <div style="height: 100px">
-                        <a href="https://home.cern">
-                            <img src="{% static 'userinteraction/img/logo.jpg' %}"
-                                 style="max-width: 100px; float: left; display: block; margin-right: 10px; padding: 10px">
-                        </a>
-                    </div>
-            <hr>
+        <div class="collapse navbar-collapse cern-grey-panel" id="sidebar" role="navigation">
             <ul class="nav nav-sidebar">
-
+                <li >
+                    <h2 class="menu-header">Navigation Links: </h2>
+                </li>
                 <li><a href="{% url 'userinteraction:all-quizzes' %}"><i class="glyphicon glyphicon-home"></i>
                                 Incidents list</a></li>
                 {% if template.quiztemplateusefullink_set.all %}
                 <li >
-                    <hr>
-                    <h2>Useful links: </h2>
+                    <h2 class="menu-header">Additional Help: </h2>
                 </li>
                 {% for link in template.quiztemplateusefullink_set.all %}
                 <li class="quiz-useful-link">
