@@ -19,6 +19,7 @@
 
                 <li><a href="{% url 'userinteraction:all-quizzes' %}"><i class="glyphicon glyphicon-home"></i>
                                 Incidents list</a></li>
+                {% if template.quiztemplateusefullink_set.all %}
                 <li >
                     <hr>
                     <h2>Useful links: </h2>
@@ -28,6 +29,7 @@
                     {{link.text | safe | linebreaks}}
                 </li>
                 {% endfor %}
+                {% endif %}
             </ul>
 
         </div>

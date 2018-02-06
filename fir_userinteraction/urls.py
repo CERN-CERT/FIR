@@ -23,5 +23,5 @@ urlpatterns = [
     url(r'^api/watchlist', api.subscribe_to_watchlist, name='watchlist-api'),
     url(r'^$', views.show_all_quizzes, name='all-quizzes'),
     # OAuth endpoints for the standalone version
-    url(r'^oauth/', include('oauth2_sso.urls'))
+    #url(r'^oauth/', include('oauth2_sso.urls'))
 ]
