@@ -119,6 +119,15 @@ class QuizWatchListItem(models.Model):
         return '{} - Quiz: "{}", incident: {}'.format(self.email, self.quiz.id, self.quiz.incident.id)
 
 
+class QuizTemplateUsefulLink(models.Model):
+    label = models.CharField(max_length=100, help_text='Label for identifying the help list item')
+    text = models.TextField()
+    quiz_template = models.ForeignKey(QuizTemplate, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'quiz template id={} | id={} | {}'.format(self.quiz_template.id, self.id, self.label)
+
+
 # Signals
 model_updated = Signal(providing_args=['instance', 'request'])
 watchlist_updated = Signal(providing_args=['instance', 'extra_data'])

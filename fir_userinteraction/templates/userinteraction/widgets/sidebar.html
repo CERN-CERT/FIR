@@ -19,8 +19,15 @@
 
                 <li><a href="{% url 'userinteraction:all-quizzes' %}"><i class="glyphicon glyphicon-home"></i>
                                 Incidents list</a></li>
-                <li><a href="">Another nav item</a></li>
-                <li><a href="">More navigation</a></li>
+                <li >
+                    <hr>
+                    <h2>Useful links: </h2>
+                </li>
+                {% for link in template.quiztemplateusefullink_set.all %}
+                <li class="quiz-useful-link">
+                    {{link.text | safe | linebreaks}}
+                </li>
+                {% endfor %}
             </ul>
 
         </div>

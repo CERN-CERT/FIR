@@ -12,7 +12,7 @@
 {% endblock %}
 {% block content %}
 
-{% include "userinteraction/widgets/sidebar.html" %}
+{% include "userinteraction/widgets/sidebar.html" with template=quiz.template %}
 <div class="content-holder">
 
     {% if quiz %}
