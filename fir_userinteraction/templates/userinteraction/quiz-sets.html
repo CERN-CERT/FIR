@@ -58,7 +58,9 @@
                                     <h4 class="panel-title">
                                         <a data-toggle="collapse" data-parent="#accordion"
                                            href="#collapseActivityDetails"
-                                           aria-expanded="false">What has been detected?</a>
+                                           aria-expanded="false">
+                                            <i class="caret-indicator glyphicon glyphicon-chevron-down"></i>
+                                            What has been detected?</a>
                                     </h4>
                                 </div>
                                 <div id="collapseActivityDetails" class="panel-collapse collapse in">
@@ -78,6 +80,7 @@
                                      href="#collapseOne">
                                     <h4 class="panel-title">
                                         <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                                            <i class="caret-indicator glyphicon {% if not quiz.is_answered %} glyphicon-chevron-down {% else %} glyphicon-chevron-right {% endif %}"></i>
                                             Your action needed to mitigate this issue:
                                         </a>
                                     </h4>
@@ -119,9 +122,11 @@
                                 <div class="panel-heading incident-panel-head" data-toggle="collapse"
                                      href="#collapseTwo">
                                     <h4 class="panel-title">
+                                        <i class="caret-indicator glyphicon {% if quiz.is_answered %} glyphicon-chevron-down {% else %} glyphicon-chevron-right {% endif %}"></i>
                                         <a data-toggle="collapse" data-parent="#accordion"
                                            href="#collapseTwo"
-                                           aria-expanded="false">Your comments. Our answers.</a>
+                                           aria-expanded="false">
+                                            Your comments. Our answers.</a>
                                     </h4>
                                 </div>
                                 <div id="collapseTwo" class="panel-collapse collapse {% if quiz.is_answered %} in {% endif %}">

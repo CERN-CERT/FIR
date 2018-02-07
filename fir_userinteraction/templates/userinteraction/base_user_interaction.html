@@ -45,7 +45,18 @@
     <script type="text/javascript" src="{% static "custom_js/ajax.js" %}"></script>
     <script type="text/javascript" src="{% static "custom_js/auto_ajax.js" %}"></script>
 
-    {% block custom_js %}{% endblock %}
+    {% block custom_js %}
+    <script type="text/javascript">
+      $(function(){
+          $(".panel-heading")
+             .on("click",function(e){
+                 var carets = $(this).find(".caret-indicator").toggleClass("glyphicon-chevron-down glyphicon-chevron-right");
+
+             });
+        });
+    </script>
+
+    {% endblock %}
 
   </body>
 </html>

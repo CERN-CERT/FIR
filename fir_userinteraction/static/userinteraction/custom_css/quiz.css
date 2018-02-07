@@ -1,4 +1,5 @@
 .quiz-title {
+    margin-top: 0;
     color:  #0053A1;
     font-size: 36px;
 }
@@ -9,9 +10,6 @@
 }
 
 
-.quiz-title-red-small {
-    font-size: 2em;
-}
 
 .activity-details {
     color: #0053A1;
@@ -33,7 +31,7 @@
     border: 1px solid black;
     color: black;
     font-weight: 100;
-    font-size: 1.2em;
+    font-size: 14px;
 }
 
 .quiz-list-group {
@@ -53,7 +51,7 @@
 }
 
 label>span {
-    font-size: 1.2em;
+    font-size: 16px;
 }
 
 
@@ -83,7 +81,7 @@ label>span {
 
 body {
     padding-top: 5px;
-    background: url('/static/userinteraction/img/ui-background.png') 0px 0px repeat;
+    /*background: url('/static/userinteraction/img/ui-background.png') 0px 0px repeat;*/
     font-size: 14px;
 }
 

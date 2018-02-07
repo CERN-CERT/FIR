@@ -24,17 +24,16 @@
                     <img src="{% static 'userinteraction/img/logo.jpg' %}"
                          style="max-width: 100px; float: left; display: inline-block; margin-right: 10px; padding: 10px">
                     </a>
-
-                    <h1 class="quiz-title">
-                        <span>Your CERN Computer Security incidents:</span>
+                    <div class="mobile-friendly">
+                        <h1 class="quiz-title">
+                        Your CERN Computer Security incidents:
                     </h1>
-                    <br>
-
-                    <h2 class="mobile-friendly" style="text-transform: none">Please find here current and past computer security issues on compromises & infections,
+                        <h2 class="mobile-friendly" style="text-transform: none">Please find here current and past computer security issues on compromises & infections,
                         disclosures, vulnerabilities & misconfigurations, copyright & license problems,
                         and login info related with your computing resources.</h2>
-                    <a id="security-logo" href="https://cern.ch/security" ><img src="{% static 'userinteraction/img/header-photo.png' %}"
-                         style="width: 100%; min-height: 50px; max-height:150px;"></a>
+                    </div>
+                    <!--<a id="security-logo" href="https://cern.ch/security" ><img src="{% static 'userinteraction/img/header-photo.png' %}"-->
+                         <!--style="width: 100%; min-height: 50px; max-height:150px;"></a>-->
                 </div>
             </div>
 
@@ -46,6 +45,7 @@
             <div class="panel panel-danger cern-grey-panel">
                 <div class="panel-heading incident-panel-head" data-toggle="collapse" href="#collapseOne">
                     <h4 class="panel-title">
+                        <i class="caret-indicator glyphicon {% if blocked %} glyphicon-chevron-down {% else %} glyphicon-chevron-right {% endif %}"></i>
                         <a data-toggle="collapse" href="#collapseOne">{{ blocked | length}} incident(s) require(s) your
                             action</a>
                     </h4>
@@ -57,7 +57,10 @@
             <div class="panel panel-primary cern-grey-panel">
                 <div class="panel-heading incident-panel-head" data-toggle="collapse" href="#collapseTwo">
                     <h4 class="panel-title">
-                        <a data-toggle="collapse" href="#collapseTwo" >{{ opened | length }} open incident(s)</a>
+                        <i class="caret-indicator glyphicon glyphicon-chevron-right"></i>
+                        <a data-toggle="collapse" href="#collapseTwo" >
+                            {{ opened | length }} open incident(s)
+                        </a>
                         <!--<span class="badge" style="float: right !important">Incidents: {{ opened | length }}</span>-->
                     </h4>
                 </div>
@@ -68,7 +71,10 @@
             <div class="panel panel-success cern-grey-panel">
                 <div class="panel-heading incident-panel-head" data-toggle="collapse" href="#collapseThree">
                     <h4 class="panel-title">
-                        <a data-toggle="collapse" href="#collapseThree">Closed incidents</a>
+                        <a data-toggle="collapse" href="#collapseThree">
+                            <i class="caret-indicator glyphicon glyphicon-chevron-right"></i>
+                            Closed incidents
+                        </a>
                         <!--<span class="badge" style="float: right !important">Incidents: {{ closed | length }}</span>-->
                     </h4>
                 </div>
