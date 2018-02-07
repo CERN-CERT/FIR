@@ -29,7 +29,7 @@
                         <div class="mobile-friendly">
 
                         <h1 class="quiz-title">
-                            {{quiz.incident}}:
+                            {{quiz.incident}}
                         </h1>
                         <div class="cern-info-text">CERN computer security checks have malicious or
                             suspicious
@@ -64,7 +64,7 @@
                                     </h4>
                                 </div>
                                 <div id="collapseActivityDetails" class="panel-collapse collapse in">
-                                    <div class="panel-body">
+                                    <div class="panel-body" id="what-is-detected">
                                         {{ quiz.incident.description | safe | linebreaks}}
                                     </div>
                                 </div>
@@ -81,7 +81,7 @@
                                     <h4 class="panel-title">
                                         <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
                                             <i class="caret-indicator glyphicon {% if not quiz.is_answered %} glyphicon-chevron-down {% else %} glyphicon-chevron-right {% endif %}"></i>
-                                            Your action needed to mitigate this issue:
+                                            Your action needed to mitigate this issue
                                         </a>
                                     </h4>
                                 </div>

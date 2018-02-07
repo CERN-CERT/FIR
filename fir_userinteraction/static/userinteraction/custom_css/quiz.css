@@ -2,11 +2,13 @@
     margin-top: 7px;
     color:  #0053A1;
     font-size: 36px;
+    font-weight: bold;
 }
 
 .form-question-group {
     text-transform: none;
     color:  #0053A1;
+    font-size: 18px;
 }
 
 
@@ -18,13 +20,19 @@
 .activity-details-info {
     background-color: white;
 }
+
 .cern-info-text {
     font-size: 14px;
     text-transform: none;
 }
 
+.list-issues-link {
+    padding-left: 0 !important;
+}
 
-
+.user-comment {
+    font-size: 14px;
+}
 
 .badge.badge-ui {
     background-color: white;
@@ -51,8 +59,11 @@
 }
 
 label>span {
-    font-size: 16px;
+    font-size: 14px;
 }
+
+
+
 
 
 .ui-sidebar {
@@ -103,6 +114,28 @@ body {
     background-color: #f5f5f5;
 }
 
+
+.footer-item {
+    text-align: center;
+}
+
+.ui-footer {
+    line-height: 1;
+    background-color: #EEE;
+    padding: 2px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+}
+
+.logo-bottom {
+    float: left;
+    padding-bottom: 5px;
+    margin-top: -10px;
+}
+
+
 @media screen and (min-width: 768px) and (max-width: 1320px) {
     .content-holder {
         width: 75%;
@@ -110,10 +143,28 @@ body {
 
 }
 
+@media screen and (min-width: 992px) {
+    body {
+        padding-bottom: 70px;
+    }
+}
+
+@media screen and (min-width: 768px) and (max-width: 991px) {
+    body {
+        padding-bottom: 125px;
+       }
+}
+
 @media screen and (max-width: 767px) {
     .content-holder {
         width: 99% !important;
     }
+
+
+.ui-footer {
+    position: relative;
+    font-size: 10px;
+}
 
     #security-logo {
         display: none;
@@ -121,7 +172,7 @@ body {
 
     body {
         padding-top: 0px;
-
+        padding-bottom: 0px;
     }
 
     .ui-sidebar {

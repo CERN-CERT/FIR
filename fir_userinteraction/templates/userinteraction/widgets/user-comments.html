@@ -2,7 +2,7 @@
 {% load gethash %}
 
 {% for comment in comments %}
-<div class="{{alert_classes.labels | gethash:comment.action.name }}">
+<div class="{{alert_classes.labels | gethash:comment.action.name }} user-comment">
     <i class="{{alert_classes.glyphs | gethash:comment.action.name }}"
        style="margin-right: 10px" title="Status: {{comment.action.name}}"></i>
     <span><strong>{{comment.date | date:"Y-m-d, H:i:s " }}</strong> - </span>
