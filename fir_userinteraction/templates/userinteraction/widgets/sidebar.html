@@ -9,11 +9,8 @@
         </div>
         <div class="collapse navbar-collapse cern-grey-panel" id="sidebar" role="navigation">
             <ul class="nav nav-sidebar">
-                <li >
-                    <h2 class="menu-header">Navigation Links: </h2>
-                </li>
-                <li><a href="{% url 'userinteraction:all-quizzes' %}"><i class="glyphicon glyphicon-home"></i>
-                                Incidents list</a></li>
+                <li class="quiz-useful-link"><a href="{% url 'userinteraction:all-quizzes' %}">
+                                List all your issues</a></li>
                 {% if template.quiztemplateusefullink_set.all %}
                 <li >
                     <h2 class="menu-header">Additional Help: </h2>

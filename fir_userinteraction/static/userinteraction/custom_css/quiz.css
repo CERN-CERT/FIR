@@ -1,6 +1,6 @@
 .quiz-title {
     color:  #0053A1;
-    font-size: 4em;
+    font-size: 36px;
 }
 
 .form-question-group {
@@ -8,10 +8,6 @@
     color:  #0053A1;
 }
 
-.quiz-title-red {
-    color: #a94442;
-    font-size: 3.5em;
-}
 
 .quiz-title-red-small {
     font-size: 2em;
@@ -25,15 +21,12 @@
     background-color: white;
 }
 .cern-info-text {
-    font-size: 1.3em;
+    font-size: 14px;
     text-transform: none;
 }
 
 
 
-.user-display {
-    font-size: 22px;
-}
 
 .badge.badge-ui {
     background-color: white;
@@ -48,7 +41,7 @@
 }
 
 .incident-title {
-    font-size: 1.4em;
+    font-size: 20px;
     text-transform: none;
     margin-top: 2px;
 }
@@ -60,19 +53,30 @@
 }
 
 label>span {
-    font-size: 1.5em;
+    font-size: 1.2em;
 }
 
 
 .ui-sidebar {
-    font-family: Verdana;
+    /*font-family: Verdana;*/
     font-size: 16px;
     float:left;
     width: 25%;
 }
 
+.no-side-padding {
+    padding-left: 10px;
+    padding-right: 0;
+}
 
 
+.non-mobile-menu {
+    display: block;
+}
+
+.mobile-menu {
+    display: none;
+}
 .content-holder {
     width: 75%; float: left;
 }
@@ -80,6 +84,7 @@ label>span {
 body {
     padding-top: 5px;
     background: url('/static/userinteraction/img/ui-background.png') 0px 0px repeat;
+    font-size: 14px;
 }
 
 
@@ -89,6 +94,7 @@ body {
 .incident-panel-head>.panel-title{
     cursor: pointer !important;
     text-transform: none;
+    font-size: 20px;
 }
 
 .badge-ui {
@@ -101,7 +107,7 @@ body {
 
 @media screen and (min-width: 768px) and (max-width: 1320px) {
     .content-holder {
-        width: 60%;
+        width: 75%;
     }
 
 }
@@ -123,8 +129,15 @@ body {
     .ui-sidebar {
         width: 100%;
         float: none;
-        margin-left: 0;
         background-color: #E8E8E8;
+    }
+
+    .mobile-menu {
+        display: block;
+    }
+
+    .non-mobile-menu {
+        display: none;
     }
 
     .show-menu-btn {
@@ -137,6 +150,10 @@ body {
 
     .mobile-friendly {
         float: left;
+    }
+
+    .container-fluid {
+        padding: 0;
     }
 }
 
