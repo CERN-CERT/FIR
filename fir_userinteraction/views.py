@@ -186,7 +186,11 @@ def render_quiz(request, quiz):
                 formsets[-1].add_error(None, 'At least one checkbox needs to be ticked!')
         if len(filter(lambda x: x is False, validations)) > 0:
             return render(request, 'userinteraction/quiz-sets.html',
-                          {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': quiz})
+                          {'formsets': formsets,
+                           'names': map(lambda x: x.title, question_groups),
+                           'quiz': quiz,
+                           'comments': quiz.incident.comments_set.order_by('-date')
+                           })
         else:
             # All forms are valid, save the answer and return readonly quiz
             save_answers(request, quiz, question_groups, formsets)
