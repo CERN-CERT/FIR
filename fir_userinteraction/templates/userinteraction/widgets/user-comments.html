@@ -10,11 +10,9 @@
     {{comment.comment}}
 </div>
 {% endfor %}
-<hr>
 <form action="{% url 'userinteraction:comment' quiz.incident_id %}" method="post" class="form form-vertical">
     {% csrf_token %}
     <div class="form-group">
-        <label for="comment">Your comment:</label>
         <textarea name="comment" style="resize: none" rows="5" maxlength="256" class="form-control"
                   placeholder="Enter your comment" id="comment"></textarea>
     </div>
