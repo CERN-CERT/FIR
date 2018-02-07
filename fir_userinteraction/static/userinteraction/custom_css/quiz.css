@@ -121,12 +121,26 @@ body {
 
 .ui-footer {
     line-height: 1;
-    background-color: #EEE;
     padding: 2px;
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
+    padding-bottom: 0 !important;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.ui-footer-content  {
+    background-color: #EEE;
+    padding-left: 0;
+    padding-right: 0;
+    border-radius: 4px;
+}
+
+.ui-footer-content>.container-fluid  {
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .logo-bottom {
@@ -161,10 +175,10 @@ body {
     }
 
 
-.ui-footer {
-    position: relative;
-    font-size: 10px;
-}
+    .ui-footer {
+        position: relative;
+        font-size: 10px;
+    }
 
     #security-logo {
         display: none;
