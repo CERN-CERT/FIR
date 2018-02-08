@@ -34,7 +34,7 @@ ALERT_CLASSES = {
         'Monitor': 'alert alert-warning',
         'Alerting': 'alert alert-success',
         'Takedown': 'alert alert-warning',
-        'User Answered': 'alert alert-success',
+        'User Answered': 'alert alert-default',
         'Investigation': 'alert alert-info',
         'Abuse': 'alert alert-danger',
         'Blocked': 'alert alert-danger'

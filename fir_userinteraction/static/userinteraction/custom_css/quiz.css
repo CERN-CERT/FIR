@@ -32,6 +32,17 @@
 
 .user-comment {
     font-size: 14px;
+    padding: 5px;
+}
+
+.alert-info {
+    background-color: #0084ff;
+    color: white;
+}
+
+.alert-default {
+    background-color: #e5e4e4;
+    color: black;
 }
 
 .badge.badge-ui {
@@ -73,6 +84,8 @@ label>span {
     font-size: 16px;
     float:left;
     width: 25%;
+    border: 1px solid;
+    border-color: #ddd;
 }
 
 .no-side-padding {
@@ -127,10 +140,11 @@ html, body {
 }
 
 
-.footer-item {
-    text-align: center;
-}
 
+#copyright-notice {
+    margin-top: 5px;
+    font-size: 11px;
+}
 .ui-footer {
     z-index: -10;
     line-height: 1;
@@ -140,8 +154,8 @@ html, body {
     left: 0;
     width: 100%;
     padding-bottom: 0 !important;
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: 25px;
+    padding-right: 25px;
     font-size: 10px;
 }
 
@@ -158,9 +172,11 @@ html, body {
 }
 
 .logo-bottom {
+    width: 60px;
     float: left;
     padding-bottom: 5px;
     margin-top: -10px;
+    padding-right: 5px
 }
 
 
@@ -226,6 +242,11 @@ html, body {
 
     .container-fluid {
         padding: 0;
+    }
+
+    .quiz-useful-link {
+        margin-left: 10px;
+        margin-right: 10px;
     }
 }
 

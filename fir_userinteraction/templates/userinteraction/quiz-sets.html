@@ -87,7 +87,7 @@
                                     <div class="panel-body">
 
                                         {% if quiz.is_answered %}
-                                        <div class="alert alert-info user-display">The user that completed the form is:
+                                        <div class="alert alert-default user-display">The user that completed the form is:
                                             <b>
                                                 {% if quiz.user %}
                                                 {{quiz.user}}
@@ -99,14 +99,15 @@
                                         {% endif %}
                                         <form action="{% url 'userinteraction:quiz' quiz.id %}" role="form"
                                               class="form-vertical"
-                                              method="post" style="margin: 15px">
+                                              method="post" style="margin: 15px; margin-top: 5px;">
                                             {% csrf_token %}
                                             {% for form in formsets %}
                                             <legend class="form-question-group">{{names | index:forloop.counter}}
                                             </legend>
                                             {{form | bootstrap}}
                                             {% endfor %}
-                                            {% if quiz.is_answered == False %}
+                                            <div style="margin-bottom: 5px"></div>
+                                            {% if not quiz.is_answered %}
                                             <div class="form-group">
                                                 <button type="submit" class="btn btn-primary">Submit</button>
                                             </div>
