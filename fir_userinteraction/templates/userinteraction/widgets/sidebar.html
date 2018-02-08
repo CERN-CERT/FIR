@@ -12,13 +12,13 @@
                 <li class="quiz-useful-link list-issues-link">
                     <a style="padding:0; padding-top: 10px" href="{% url 'userinteraction:all-quizzes' %}">
                                 List all your issues</a></li>
-                {% if template.quiztemplateusefullink_set.all %}
+                {% if template.sorted_template_links %}
                 <li >
                     <h2 class="menu-header">Additional Help: </h2>
                 </li>
-                {% for link in template.quiztemplateusefullink_set.all %}
+                {% for ordering in template.sorted_template_links %}
                 <li class="quiz-useful-link">
-                    {{link.text | safe | linebreaks}}
+                    {{ordering.text | safe | linebreaks}}
                 </li>
                 {% endfor %}
                 {% endif %}

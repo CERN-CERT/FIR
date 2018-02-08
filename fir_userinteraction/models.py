@@ -28,10 +28,11 @@ QUESTION_WIDGET_TYPES = (
 class Question(models.Model):
     field_type = models.CharField(choices=QUESTION_FIELD_TYPES, max_length=100)
     widget_type = models.CharField(choices=QUESTION_WIDGET_TYPES, null=True, max_length=100)
-    label = models.CharField(max_length=500)
+    label = models.TextField()
+    title = models.CharField(max_length=500)
 
     def __str__(self):
-        return self.label
+        return "{} ({})".format(self.title, self.widget_type)
 
 
 class QuizGroupQuestionOrder(models.Model):
@@ -79,6 +80,13 @@ class QuizTemplate(models.Model):
     question_groups = models.ManyToManyField(QuestionGroup, through='QuizTemplateQuestionGroupOrder',
                                              verbose_name='list of quiz groups')
     name = models.CharField(max_length=100, help_text='Name of this specific quiz template')
+    useful_links = models.ManyToManyField('QuizTemplateUsefulLink', through='UsefulLinkOrdering',
+                                          verbose_name='list of useful links for template')
+    description = models.TextField(null=False)
+
+    @property
+    def sorted_template_links(self):
+        return [x.template_useful_link for x in self.usefullinkordering_set.order_by('order_index')]
 
     def __str__(self):
         return self.name
@@ -122,10 +130,24 @@ class QuizWatchListItem(models.Model):
 class QuizTemplateUsefulLink(models.Model):
     label = models.CharField(max_length=100, help_text='Label for identifying the help list item')
     text = models.TextField()
-    quiz_template = models.ForeignKey(QuizTemplate, on_delete=models.CASCADE)
 
     def __str__(self):
-        return 'quiz template id={} | id={} | {}'.format(self.quiz_template.id, self.id, self.label)
+        return 'id={} | {}'.format(self.id, self.label)
+
+
+class UsefulLinkOrdering(models.Model):
+    template_useful_link = models.ForeignKey(QuizTemplateUsefulLink, on_delete=models.CASCADE)
+    quiz_template = models.ForeignKey(QuizTemplate, on_delete=models.CASCADE)
+    order_index = models.IntegerField(validators=[
+        MaxValueValidator(100),
+        MinValueValidator(1)
+    ])
+
+    def __str__(self):
+        return 'link={} | quiz_template={}'.format(self.template_useful_link, self.quiz_template)
+
+    class Meta:
+        ordering = ['-order_index']
 
 
 # Signals

@@ -15,7 +15,7 @@
 <div class="mobile-menu">
     {% include "userinteraction/widgets/sidebar.html" with template=quiz.template %}
 </div>
-<div class="container-fluid">
+<div class="container-fluid main-content-ui">
 
     <div class="row-fluid">
 
@@ -31,9 +31,8 @@
                         <h1 class="quiz-title">
                             {{quiz.incident}}
                         </h1>
-                        <div class="cern-info-text"> CERN computer security checks have identified software applications, files, or similar which are subject to copyright or license fees. It seems, however,
-                            that their origin or usage is in violation of copyrights or license conditions, and, as such, also violating
-                            <a href="https://cern.ch/ComputingRules" target="_blank">CERN's Computing Rules</a>.
+                        <div class="cern-info-text">
+                            {{quiz.template.description | safe | linebreaks}}
                         </div>
                         </div>
 
@@ -141,4 +140,11 @@
         </div>
     </div>
 </div>
+<div class="container-fluid ui-footer hidden-xs" >
+      <div class="row-fluid">
+          <div class="col-lg-8 col-lg-push-2 col-md-11 col-md-push-1 col-sm-12 ui-footer-content">
+            {% include "userinteraction/widgets/footer.html" %}
+          </div>
+      </div>
+  </div>
 {% endblock %}

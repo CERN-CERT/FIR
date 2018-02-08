@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from fir_userinteraction.models import Question, Quiz, QuizTemplate, QuizAnswer, QuestionGroup, QuizGroupQuestionOrder, \
-    QuizTemplateQuestionGroupOrder, QuizWatchListItem, QuizTemplateUsefulLink
+    QuizTemplateQuestionGroupOrder, QuizWatchListItem, QuizTemplateUsefulLink, UsefulLinkOrdering
 
 
 class QuizGroupQuestionOrderInline(admin.TabularInline):
@@ -17,12 +17,18 @@ class QuizTemplateQuestionGroupOrderInline(admin.TabularInline):
     extra = 1
 
 
+class UsefulLinkInline(admin.TabularInline):
+    model = UsefulLinkOrdering
+    ordering = ['order_index']
+    extra = 1
+
+
 class QuestionGroupAdmin(admin.ModelAdmin):
     inlines = (QuizGroupQuestionOrderInline,)
 
 
 class QuizTemplateAdmin(admin.ModelAdmin):
-    inlines = (QuizTemplateQuestionGroupOrderInline,)
+    inlines = (QuizTemplateQuestionGroupOrderInline, UsefulLinkInline, )
 
 
 admin.site.register(QuizTemplate, QuizTemplateAdmin)
