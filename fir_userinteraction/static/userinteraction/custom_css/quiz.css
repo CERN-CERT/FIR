@@ -33,6 +33,7 @@
 .user-comment {
     font-size: 14px;
     padding: 5px;
+    border-radius: 15px;
 }
 
 .alert-info {
