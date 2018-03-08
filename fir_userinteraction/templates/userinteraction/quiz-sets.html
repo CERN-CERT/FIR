@@ -13,7 +13,7 @@
 {% block content %}
 
 <div class="mobile-menu">
-    {% include "userinteraction/widgets/sidebar.html" with template=quiz.template %}
+    {% include "userinteraction/widgets/sidebar.html" with template=quiz.template dev_artifact=device_artifact %}
 </div>
 <div class="container-fluid main-content-ui">
 
@@ -42,7 +42,7 @@
     </div>
     <div class="row-fluid">
         <div class="col-lg-8 col-lg-push-2 col-md-11 col-md-push-1 col-sm-12">
-            <div class="non-mobile-menu">{% include "userinteraction/widgets/sidebar.html" with template=quiz.template %}</div>
+            <div class="non-mobile-menu">{% include "userinteraction/widgets/sidebar.html" with template=quiz.template dev_artifact=device_artifact %}</div>
             <div class="content-holder">
 
                 {% if quiz %}

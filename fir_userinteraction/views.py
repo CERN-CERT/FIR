@@ -166,15 +166,30 @@ def get_ordered_question_groups(quiz):
                quiz.template.quiztemplatequestiongrouporder_set.all().order_by('order_index'))
 
 
+def get_device_artifact_from_quiz(quiz):
+    """
+    Get a quiz's incident and get the device if it exists in the artifacts
+    :param quiz: Quiz object from the database
+    :return: a string containing the name (if defined), or None in case it does not exist
+    """
+    device_artifacts = quiz.incident.artifacts.filter(type='device')
+    if device_artifacts:
+        return device_artifacts[0].value
+    else:
+        return None
+
+
 def render_quiz(request, quiz):
     question_groups = get_ordered_question_groups(quiz)
+    device_artifact = get_device_artifact_from_quiz(quiz)
     formsets = []
     if request.method == 'GET':
         for group in question_groups:
             formsets.append(build_form_from_template(group))
         return render(request, 'userinteraction/quiz-sets.html',
                       {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': quiz,
-                       'alert_classes': ALERT_CLASSES})
+                       'alert_classes': ALERT_CLASSES,
+                       'device_artifact': device_artifact})
     else:
         # POST case
         validations = []
@@ -189,6 +204,7 @@ def render_quiz(request, quiz):
                           {'formsets': formsets,
                            'names': map(lambda x: x.title, question_groups),
                            'quiz': quiz,
+                           'device_artifact': device_artifact,
                            'comments': quiz.incident.comments_set.order_by('-date')
                            })
         else:
@@ -199,6 +215,7 @@ def render_quiz(request, quiz):
 
 def render_answered_quiz(request, quiz):
     question_groups = get_ordered_question_groups(quiz)
+    device_artifact = get_device_artifact_from_quiz(quiz)
     answers = QuizAnswer.objects.filter(quiz=quiz)
     formsets = []
     for group in question_groups:
@@ -206,13 +223,13 @@ def render_answered_quiz(request, quiz):
         answer_dict = {str(answer.question.id): answer.answer_value for answer in group_answers}
         formsets.append(build_form_from_template(group, readonly=True, initial=answer_dict))
 
-    thanks_message = 'You are seeing a read-only view of the completed form!'
     return render(request, 'userinteraction/quiz-sets.html',
                   {'formsets': formsets,
                    'names': map(lambda x: x.title, question_groups),
                    'quiz': quiz,
+                   'device_artifact': device_artifact,
                    'comments': quiz.incident.comments_set.order_by('-date'),
-                   'thanks': thanks_message, 'alert_classes': ALERT_CLASSES})
+                   'alert_classes': ALERT_CLASSES})
 
 
 def get_incident_for_user(authorization_target, incident_id, request):

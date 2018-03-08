@@ -1,13 +1,12 @@
 # API related stuff
+from functools import reduce
+
 import markdown2
-from django.contrib.sites.models import Site
-from django.core.mail import send_mail
 from django.conf import settings
+from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
 from django.template import Context, Template
-from django.template.defaultfilters import safe
-from markdownx.utils import markdownify
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
@@ -15,12 +14,10 @@ from rest_framework.response import Response
 
 from fir_api.permissions import IsIncidentHandler
 from fir_plugins.links import Links
-from fir_plugins.templatetags import markdown
 from fir_userinteraction.models import Quiz, QuizTemplate, QuizWatchListItem, watchlist_updated, \
     build_userinteraction_path
 from fir_userinteraction.serializers import QuizSerializer, QuizTemplateSerializer, EmailSerializer, \
     QuizWatchListItemSerializer, WatchlistSerializer
-from incidents.models import model_created
 
 
 class QuizViewSet(viewsets.ModelViewSet):
@@ -66,15 +63,18 @@ def send_account_emails(request):
             incident_url = site_root + reverse('userinteraction:quiz', args=[qz.id])
 
         incident_url = '[Incident URL]({})'.format(incident_url)
+        affected_entities = reduce(lambda x, y: str(x) + ', ' + str(y),
+                                   list(qz.incident.concerned_business_lines.all()))
         # TODO change template to be something more dynamic
-        template = '# {}\n\n## Description:\n\n- {}\n\n## Category:\n\n{}\n\n## Affected entities: \n\n- {} \n\n\nYou ' \
-                   'can access your incident by clicking here: {}' \
+        template = '# {subj}\n\n## Description:\n\n- {desc}\n\n## Category:\n\n{category}\n\n## Affected entities: ' \
+                   '\n\n- {entities} \n\n\nYou ' \
+                   'can access your incident by clicking here: {inc_url}' \
             .format(
-            qz.incident.subject,
-            qz.incident.description,
-            qz.incident.category,
-            reduce(lambda x, y: str(x) + ', ' + str(y), list(qz.incident.concerned_business_lines.all())),
-            incident_url)
+            subj=qz.incident.subject,
+            desc=qz.incident.description,
+            category=qz.incident.category,
+            entities=affected_entities,
+            inc_url=incident_url)
 
         html = markdown2.markdown(template, extras=["link-patterns", "tables", "code-friendly"],
                                   link_patterns=Links().link_patterns())
@@ -111,4 +111,3 @@ def subscribe_to_watchlist(request):
         watchlist_updated.send(sender=qz.__class__, instance=qz, extra_data=extra_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
