@@ -12,6 +12,7 @@ from incidents.models import Incident, IncidentCategory, Comments, Label, FIRMod
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
+import time
 
 QUESTION_FIELD_TYPES = (
     ('django.forms.CharField', 'Char'),
@@ -201,10 +202,10 @@ def send_initial_notification_to_watchlist(sender, instance, extra_data, **kwarg
     notify_watchers(instance, instance.incident, watchlist_items, 'initial', extra_data=extra_data)
 
 
-def notify_watchers(quiz, incident, watchlist, type, extra_data={}):
+def notify_watchers(quiz, incident, watchlist, action_type, extra_data={}):
     recipients = [item.email for item in watchlist]
     last_comment = incident.get_last_comment()
-    category_templates = incident.category.categorytemplate_set.filter(type=type)
+    category_templates = incident.category.categorytemplate_set.filter(type=action_type)
     last_action = last_comment.action.name
     if len(category_templates) > 0:
         cat_template = category_templates[0]
@@ -213,7 +214,7 @@ def notify_watchers(quiz, incident, watchlist, type, extra_data={}):
             answers_str = get_rendered_answers(quiz)
             c = Context(dict({
                 'quiz': answers_str,
-                'date': str(last_comment.date),
+                'date': last_comment.date.strftime("%b %d %Y %H:%M:%S"),
                 'incident_name': incident.subject,
                 'incident_desc': incident.description
             }, **extra_data))
