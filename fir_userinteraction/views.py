@@ -119,6 +119,7 @@ def build_form_from_template(question_group, request=None, readonly=False, initi
         built = form_class(request.POST, prefix='{}'.format(str(question_group.id)), initial=initial)
 
     built.order_fields(get_ordering_fields(question_group))
+    setattr(built, 'description', question_group.description)
     return built
 
 

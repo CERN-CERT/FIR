@@ -12,6 +12,7 @@ from incidents.models import Incident, IncidentCategory, Comments, Label, FIRMod
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
+from datetime import datetime
 import time
 
 QUESTION_FIELD_TYPES = (
@@ -71,6 +72,7 @@ class QuestionGroup(models.Model):
     questions = models.ManyToManyField(Question, through='QuizGroupQuestionOrder',
                                        verbose_name='list of questions in this group')
     title = models.CharField(max_length=500)
+    description = models.TextField(null=True)
 
     def __str__(self):
         return '{} | required: {}'.format(self.title, self.required)
@@ -231,6 +233,10 @@ def notify_watchers(quiz, incident, watchlist, action_type, extra_data={}):
         elif last_action == 'Alerting':
             pass
         else:
+            date = extra_data.get('date')
+            if date:
+                date = date[:-1] if date.endswith('Z') else date
+                extra_data['date'] = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S').strftime("%b %d %Y %H:%M:%S")
             c = Context(extra_data)
             subject_rendered = Template(cat_template.subject).render(c)
             body_rendered = Template(cat_template.body).render(c)

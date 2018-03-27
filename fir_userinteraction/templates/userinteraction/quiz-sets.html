@@ -104,6 +104,9 @@
                                             {% for form in formsets %}
                                             <legend class="form-question-group">{{names | index:forloop.counter}}
                                             </legend>
+                                            {% if form.description %}
+                                                <div class="well well-sm">{{form.description | safe}}</div>
+                                            {% endif %}
                                             {{form | bootstrap}}
                                             {% endfor %}
                                             <div style="margin-bottom: 5px"></div>

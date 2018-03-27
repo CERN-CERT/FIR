@@ -8,6 +8,7 @@ import operator
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
+from functools import reduce
 
 import incidents
 from incidents.models import Profile, AccessControlEntry, BusinessLine
