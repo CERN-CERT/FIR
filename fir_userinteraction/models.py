@@ -1,19 +1,15 @@
 from __future__ import unicode_literals
 
-from django.contrib.auth import get_user_model
-from django.core.urlresolvers import reverse
-from django.db.models import Q, Max
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.dispatch import Signal, receiver
 from django.template import Context, Template
 from ipware.ip import get_ip
-from incidents.models import Incident, IncidentCategory, Comments, Label, FIRModel, model_created
+from incidents.models import Incident, IncidentCategory, Comments, Label
 from django.db import models
 from django.contrib.auth.models import User
 import uuid
 from datetime import datetime
-import time
 
 QUESTION_FIELD_TYPES = (
     ('django.forms.CharField', 'Char'),
@@ -205,8 +201,9 @@ def send_initial_notification_to_watchlist(sender, instance, extra_data, **kwarg
 
 
 def notify_watchers(quiz, incident, watchlist, action_type, extra_data={}):
-    recipients = [item.email for item in watchlist]
+    cc_recipients = [item.email for item in watchlist]
     last_comment = incident.get_last_comment()
+    responsible_email = incident.quiz.user.email
     category_templates = incident.category.categorytemplate_set.filter(type=action_type)
     last_action = last_comment.action.name
     if len(category_templates) > 0:
@@ -227,9 +224,12 @@ def notify_watchers(quiz, incident, watchlist, action_type, extra_data={}):
             inc.status = 'O'
             inc.save()
 
-            send_mail(subject_rendered, message='Automatic mail generation', html_message=body_rendered,
-                      from_email='noreply@cern.ch',
-                      recipient_list=recipients)
+            msg = EmailMessage(subject=subject_rendered, body=body_rendered,
+                               from_email='noreply@cern.ch',
+                               to=[responsible_email],
+                               cc=cc_recipients)
+            msg.content_subtype = 'html'
+            msg.send()
         elif last_action == 'Alerting':
             pass
         else:
@@ -241,9 +241,13 @@ def notify_watchers(quiz, incident, watchlist, action_type, extra_data={}):
             subject_rendered = Template(cat_template.subject).render(c)
             body_rendered = Template(cat_template.body).render(c)
 
-            send_mail(subject_rendered, message='Automatic mail generation', html_message=body_rendered,
-                      from_email='noreply@cern.ch',
-                      recipient_list=recipients)
+            msg = EmailMessage(subject=subject_rendered, body=body_rendered,
+                               from_email='noreply@cern.ch',
+                               to=[responsible_email],
+                               cc=cc_recipients)
+
+            msg.content_subtype = "html"
+            msg.send()
     else:
         print('Nothing to do...')
 

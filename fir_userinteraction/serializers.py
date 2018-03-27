@@ -6,7 +6,7 @@ from fir_userinteraction.models import Quiz, QuizTemplate, QuizWatchListItem
 class QuizSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quiz
-        fields = ('id', 'incident', 'template', 'answers', 'is_answered')
+        fields = ('id', 'incident', 'template', 'answers', 'is_answered', 'user')
         read_only_fields = ('id', 'answers', 'is_answered')
 
 

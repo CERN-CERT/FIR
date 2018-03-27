@@ -70,11 +70,11 @@ def send_account_emails(request):
                    '\n\n- {entities} \n\n\nYou ' \
                    'can access your incident by clicking here: {inc_url}' \
             .format(
-            subj=qz.incident.subject,
-            desc=qz.incident.description,
-            category=qz.incident.category,
-            entities=affected_entities,
-            inc_url=incident_url)
+                subj=qz.incident.subject,
+                desc=qz.incident.description,
+                category=qz.incident.category,
+                entities=affected_entities,
+                inc_url=incident_url)
 
         html = markdown2.markdown(template, extras=["link-patterns", "tables", "code-friendly"],
                                   link_patterns=Links().link_patterns())
