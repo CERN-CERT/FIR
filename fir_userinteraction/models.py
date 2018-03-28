@@ -203,7 +203,9 @@ def send_initial_notification_to_watchlist(sender, instance, extra_data, **kwarg
 def notify_watchers(quiz, incident, watchlist, action_type, extra_data={}):
     cc_recipients = [item.email for item in watchlist]
     last_comment = incident.get_last_comment()
-    responsible_email = incident.quiz.user.email
+    responsible = incident.quiz.user
+    if 'username' not in extra_data:
+        extra_data['username'] = responsible.username
     category_templates = incident.category.categorytemplate_set.filter(type=action_type)
     last_action = last_comment.action.name
     if len(category_templates) > 0:
@@ -226,7 +228,7 @@ def notify_watchers(quiz, incident, watchlist, action_type, extra_data={}):
 
             msg = EmailMessage(subject=subject_rendered, body=body_rendered,
                                from_email='noreply@cern.ch',
-                               to=[responsible_email],
+                               to=[responsible.email],
                                cc=cc_recipients)
             msg.content_subtype = 'html'
             msg.send()
@@ -243,7 +245,7 @@ def notify_watchers(quiz, incident, watchlist, action_type, extra_data={}):
 
             msg = EmailMessage(subject=subject_rendered, body=body_rendered,
                                from_email='noreply@cern.ch',
-                               to=[responsible_email],
+                               to=[responsible.email],
                                cc=cc_recipients)
 
             msg.content_subtype = "html"

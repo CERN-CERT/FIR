@@ -182,7 +182,7 @@ def get_device_artifact_from_quiz(quiz):
 
 def render_quiz(request, quiz):
     question_groups = get_ordered_question_groups(quiz)
-    device_artifact = get_device_artifact_from_quiz(quiz)
+    device_artifact = get_device_artifact_from_quiz(quiz).upper()
     formsets = []
     if request.method == 'GET':
         for group in question_groups:
