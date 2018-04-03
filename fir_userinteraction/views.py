@@ -188,9 +188,14 @@ def render_quiz(request, quiz):
         for group in question_groups:
             formsets.append(build_form_from_template(group))
         return render(request, 'userinteraction/quiz-sets.html',
-                      {'formsets': formsets, 'names': map(lambda x: x.title, question_groups), 'quiz': quiz,
+                      {
+                       'formsets': formsets,
+                       'names': map(lambda x: x.title, question_groups),
+                       'quiz': quiz,
                        'alert_classes': ALERT_CLASSES,
-                       'device_artifact': device_artifact})
+                       'device_artifact': device_artifact,
+                       'comments': quiz.incident.comments_set.order_by('-date')
+                       })
     else:
         # POST case
         validations = []
@@ -216,6 +221,9 @@ def render_quiz(request, quiz):
 
 def render_answered_quiz(request, quiz):
     question_groups = get_ordered_question_groups(quiz)
+    is_incident_handler = (request.user.is_superuser or
+                           request.user.groups.filter(name='Incident handlers').count() > 0)
+
     device_artifact = get_device_artifact_from_quiz(quiz)
     answers = QuizAnswer.objects.filter(quiz=quiz)
     formsets = []
@@ -230,7 +238,8 @@ def render_answered_quiz(request, quiz):
                    'quiz': quiz,
                    'device_artifact': device_artifact,
                    'comments': quiz.incident.comments_set.order_by('-date'),
-                   'alert_classes': ALERT_CLASSES})
+                   'alert_classes': ALERT_CLASSES,
+                   'is_incident_handler': is_incident_handler})
 
 
 def get_incident_for_user(authorization_target, incident_id, request):
