@@ -7,21 +7,25 @@ from django.http import HttpResponse
 from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from django.core.files import File as FileWrapper
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
-from rest_framework import viewsets
-from rest_framework.decorators import detail_route
+from rest_framework import viewsets, status
+from rest_framework.decorators import detail_route, list_route
 from rest_framework import renderers
+from rest_framework.response import Response
 
-
-from fir_api.serializers import UserSerializer, IncidentSerializer, ArtifactSerializer, FileSerializer
+from fir_alerting.models import CategoryTemplate, RecipientTemplate
+from fir_api.serializers import UserSerializer, IncidentSerializer, ArtifactSerializer, FileSerializer, \
+    BusinessLineSerializer, RecipientTemplateSerializer, CategoryTemplateSerializer, AccessControlEntrySerializer, \
+    GroupSerializer, CategorySerializer, DetectionSerializer
 from fir_api.permissions import IsIncidentHandler
 from fir_artifacts.files import handle_uploaded_file, do_download
-from incidents.models import Incident, Artifact, Comments, File
+from incidents.models import Incident, Artifact, Comments, File, BusinessLine, AccessControlEntry, IncidentCategory, \
+    Label
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -31,6 +35,11 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated, IsAdminUser)
+
+    @list_route(methods=['get'], url_path='by_name/(?P<username>\w+)')
+    def get_by_username(self, request, username):
+        user = get_object_or_404(User, username=username)
+        return Response(UserSerializer(user, context={'request': request}).data, status=status.HTTP_200_OK)
 
 
 class IncidentViewSet(viewsets.ModelViewSet):
@@ -50,6 +59,65 @@ class IncidentViewSet(viewsets.ModelViewSet):
         Comments.create_diff_comment(self.get_object(), serializer.validated_data, self.request.user)
         instance = serializer.save()
         instance.refresh_main_business_lines()
+
+
+class BusinessLineViewSet(viewsets.ModelViewSet):
+    queryset = BusinessLine.objects.all()
+    serializer_class = BusinessLineSerializer
+    permission_classes = (IsAuthenticated, IsIncidentHandler)
+
+    def get_queryset(self):
+        queryset = BusinessLine.objects.all()
+        name = self.request.query_params.get('name', None)
+        if name is not None:
+            queryset = queryset.filter(name=name)
+        return queryset
+
+    @list_route(methods=['get'], url_path='by_name/(?P<name>\w+)')
+    def get_by_name(self, request, name):
+        bl = get_object_or_404(BusinessLine, name=name)
+        return Response(BusinessLineSerializer(bl, context={'request': request}).data, status=status.HTTP_200_OK)
+
+
+class CategoryTemplateViewSet(viewsets.ModelViewSet):
+    queryset = CategoryTemplate.objects.all()
+    serializer_class = CategoryTemplateSerializer
+    permission_classes = (IsAuthenticated, IsIncidentHandler)
+
+
+class RecipientTemplateViewSet(viewsets.ModelViewSet):
+    queryset = RecipientTemplate.objects.all()
+    serializer_class = RecipientTemplateSerializer
+    permission_classes = (IsAuthenticated, IsIncidentHandler)
+
+
+class AccessControlEntryViewSet(viewsets.ModelViewSet):
+    queryset = AccessControlEntry.objects.all()
+    serializer_class = AccessControlEntrySerializer
+    permission_classes = (IsAuthenticated, IsIncidentHandler)
+
+
+class RoleViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+    permission_classes = (IsAuthenticated, IsIncidentHandler)
+
+    @list_route(methods=['get'], url_path='by_name/(?P<name>.+)')
+    def get_by_name(self, request, name):
+        gr = get_object_or_404(Group, name=name)
+        return Response(GroupSerializer(gr, context={'request': request}).data, status=status.HTTP_200_OK)
+
+
+class CategoriesViewSet(viewsets.ModelViewSet):
+    queryset = IncidentCategory.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (IsAuthenticated, IsIncidentHandler)
+
+
+class DetectionViewSet(viewsets.ModelViewSet):
+    queryset = Label.objects.filter(group__name='detection')
+    serializer_class = DetectionSerializer
+    permission_classes = (IsAuthenticated, IsIncidentHandler)
 
 
 class ArtifactViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
