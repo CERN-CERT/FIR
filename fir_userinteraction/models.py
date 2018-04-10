@@ -182,7 +182,7 @@ def create_comment_for_answered_quiz(sender, instance, request, **kwargs):
     full_user = '{}@{}'.format(str(user), str(ip))
 
     comment = Comments.objects.create(incident=instance.incident,
-                                      comment='An incident form has been filled in: {}.\n The user that commented is: {}'.format(
+                                      comment='An incident form has been filled in: <{}>.\n The user that commented is: {}'.format(
                                           quiz_url,
                                           full_user),
                                       action=get_or_create_user_answered_label(),
