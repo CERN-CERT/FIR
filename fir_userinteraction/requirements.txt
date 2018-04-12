@@ -1,3 +1,4 @@
 django-bootstrap-form
 django-ipware
 django-markdownx
+celery

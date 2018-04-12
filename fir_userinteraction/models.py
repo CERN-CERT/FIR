@@ -1,15 +1,13 @@
 from __future__ import unicode_literals
 
-from django.core.mail import EmailMessage
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.dispatch import Signal, receiver
-from django.template import Context, Template
-from ipware.ip import get_ip
-from incidents.models import Incident, IncidentCategory, Comments, Label
-from django.db import models
-from django.contrib.auth.models import User
 import uuid
-from datetime import datetime
+
+from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
+from django.shortcuts import get_object_or_404
+
+from incidents.models import Incident, IncidentCategory, Comments, Label
 
 QUESTION_FIELD_TYPES = (
     ('django.forms.CharField', 'Char'),
@@ -149,116 +147,49 @@ class UsefulLinkOrdering(models.Model):
         ordering = ['-order_index']
 
 
-# Signals
-model_updated = Signal(providing_args=['instance', 'request'])
-watchlist_updated = Signal(providing_args=['instance', 'extra_data'])
+class CommentAttachment(models.Model):
+    """
+    Sometimes you may need to attach an extra piece of data to a comment in order to create a notification email
+    """
+    comment = models.OneToOneField(Comments, on_delete=models.CASCADE)
+    attachment = models.TextField()
+
+    def __str__(self):
+        return '{} | attachment: {}'.format(self.comment, self.attachment)
 
 
-def build_userinteraction_path(request, incident_id):
-    from django.conf import settings
-    incident_suffix = '/incidents/{}'.format(incident_id)
-    if settings.USER_INTERACTION_SERVER:
-        return settings.USER_INTERACTION_SERVER + incident_suffix
-    else:
-        return '/'.join(request.build_absolute_uri().split('/', 4)[:3]) + incident_suffix
+## Helper methods
 
-
-def get_or_create_user_answered_label():
+def get_or_create_label(name, group='action'):
     from incidents.models import LabelGroup
-    group = LabelGroup.objects.get(name='action')
+    group = LabelGroup.objects.get(name=group)
     try:
-        label = Label.objects.get(name='User Answered', group=group)
+        label = Label.objects.get(name=name, group=group)
     except Label.DoesNotExist:
-        label = Label.objects.create(name='User Answered', group=group)
+        label = Label.objects.create(name=name, group=group)
     return label
 
 
-@receiver(model_updated, sender=Quiz)
-def create_comment_for_answered_quiz(sender, instance, request, **kwargs):
-    user = request.user if request.user is not None else 'AnonymousUser'
-    ip = get_ip(request)
-
-    quiz_url = build_userinteraction_path(request, instance.incident_id)
-    full_user = '{}@{}'.format(str(user), str(ip))
-
-    comment = Comments.objects.create(incident=instance.incident,
-                                      comment='An incident form has been filled in: <{}>.\n The user that commented is: {}'.format(
-                                          quiz_url,
-                                          full_user),
-                                      action=get_or_create_user_answered_label(),
-                                      opened_by=instance.incident.opened_by)
-    inc = instance.incident
-    inc.status = 'O'
-    inc.save()
-    notify_watchers(instance, inc, instance.quizwatchlistitem_set.all(), 'answered')
-
-
-@receiver(watchlist_updated, sender=Quiz)
-def send_initial_notification_to_watchlist(sender, instance, extra_data, **kwargs):
-    print('Creating initial watchlist notification...')
-    watchlist_items = instance.quizwatchlistitem_set.all()
-    notify_watchers(instance, instance.incident, watchlist_items, 'initial', extra_data=extra_data)
-
-
-def notify_watchers(quiz, incident, watchlist, action_type, extra_data={}):
-    cc_recipients = [item.email for item in watchlist]
-    last_comment = incident.get_last_comment()
-    responsible = incident.quiz.user
-    if 'username' not in extra_data:
-        extra_data['username'] = responsible.username
-    category_templates = incident.category.categorytemplate_set.filter(type=action_type)
-    last_action = last_comment.action.name
-    if len(category_templates) > 0:
-        cat_template = category_templates[0]
-
-        if last_action == 'User Answered':
-            answers_str = get_rendered_answers(quiz)
-            c = Context(dict({
-                'quiz': answers_str,
-                'date': last_comment.date.strftime("%b %d %Y %H:%M:%S"),
-                'incident_name': incident.subject,
-                'incident_desc': incident.description
-            }, **extra_data))
-
-            subject_rendered = Template(cat_template.subject).render(c)
-            body_rendered = Template(cat_template.body).render(c)
-            inc = quiz.incident
-            inc.status = 'O'
-            inc.save()
-
-            msg = EmailMessage(subject=subject_rendered, body=body_rendered,
-                               from_email='noreply@cern.ch',
-                               to=[responsible.email],
-                               cc=cc_recipients)
-            msg.content_subtype = 'html'
-            msg.send()
-        elif last_action == 'Alerting':
-            pass
-        else:
-            date = extra_data.get('date')
-            if date:
-                date = date[:-1] if date.endswith('Z') else date
-                extra_data['date'] = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S').strftime("%b %d %Y %H:%M:%S")
-            c = Context(extra_data)
-            subject_rendered = Template(cat_template.subject).render(c)
-            body_rendered = Template(cat_template.body).render(c)
-
-            msg = EmailMessage(subject=subject_rendered, body=body_rendered,
-                               from_email='noreply@cern.ch',
-                               to=[responsible.email],
-                               cc=cc_recipients)
-
-            msg.content_subtype = "html"
-            msg.send()
+def get_incident_for_user(authorization_target, incident_id, request):
+    if authorization_target is None:
+        incident = get_object_or_404(
+            Incident.authorization.for_user(request.user, 'incidents.view_incidents'),
+            pk=incident_id)
     else:
-        print('Nothing to do...')
+        incident = authorization_target
+    return incident
 
 
-def get_rendered_answers(quiz):
-    answers = QuizAnswer.objects.filter(quiz_id=quiz.id)
-    response = ''
-    for answer in answers:
-        response += '* ' + answer.question_group.title + '\n'
-        response += answer.question.label + '\n\n'
+def get_or_create_quiz(request, incident):
+    try:
+        user_quiz = Quiz.objects.get(incident_id=incident.id)
+    except Quiz.DoesNotExist:
+        template = get_object_or_404(QuizTemplate, category=incident.category)
+        user_quiz = Quiz.objects.create(template=template, incident=incident, user=request.user)
+    return user_quiz
 
-    return response
+
+# @notification_event('quiz:updated', post_save, Quiz, verbose_name='Quiz updated',
+#                     section='Quiz updated')
+# def incident_created(sender, instance, **kwargs):
+#     return instance, instance.incident.concerned_business_lines

@@ -1,4 +1,5 @@
 # API related stuff
+import json
 from functools import reduce
 
 import markdown2
@@ -14,10 +15,11 @@ from rest_framework.response import Response
 
 from fir_api.permissions import IsIncidentHandler
 from fir_plugins.links import Links
-from fir_userinteraction.models import Quiz, QuizTemplate, QuizWatchListItem, watchlist_updated, \
-    build_userinteraction_path
+from fir_userinteraction.models import Quiz, QuizTemplate, QuizWatchListItem, CommentAttachment, get_or_create_label
 from fir_userinteraction.serializers import QuizSerializer, QuizTemplateSerializer, EmailSerializer, \
     QuizWatchListItemSerializer, WatchlistSerializer
+from fir_userinteraction.views import build_userinteraction_path
+from incidents.models import Comments
 
 
 class QuizViewSet(viewsets.ModelViewSet):
@@ -70,11 +72,11 @@ def send_account_emails(request):
                    '\n\n- {entities} \n\n\nYou ' \
                    'can access your incident by clicking here: {inc_url}' \
             .format(
-                subj=qz.incident.subject,
-                desc=qz.incident.description,
-                category=qz.incident.category,
-                entities=affected_entities,
-                inc_url=incident_url)
+            subj=qz.incident.subject,
+            desc=qz.incident.description,
+            category=qz.incident.category,
+            entities=affected_entities,
+            inc_url=incident_url)
 
         html = markdown2.markdown(template, extras=["link-patterns", "tables", "code-friendly"],
                                   link_patterns=Links().link_patterns())
@@ -105,9 +107,15 @@ def subscribe_to_watchlist(request):
             'protocol': serializer.validated_data['protocol'],
             'incident_url': build_userinteraction_path(request, qz.incident_id)
         }
-        inc = qz.incident
-        inc.status = 'B'
-        inc.save()
-        watchlist_updated.send(sender=qz.__class__, instance=qz, extra_data=extra_data)
+        incident = qz.incident
+        incident.status = 'B'
+        incident.save()
+
+        comment = Comments.objects.create(incident=incident,
+                                          comment='Initial notification sent',
+                                          action=get_or_create_label('Initial'),
+                                          opened_by=incident.opened_by)
+        CommentAttachment.objects.create(comment=comment, attachment=json.dumps(extra_data))
+
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -2,22 +2,18 @@ from importlib import import_module
 
 from django import forms
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User, AnonymousUser
-from django.core.mail import send_mail
+from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
 from django.forms.utils import ErrorDict
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from ipware.ip import get_ip
 
-from fir_api.permissions import IsIncidentHandler
-from fir_userinteraction.serializers import QuizSerializer
 from incidents.authorization.decorator import authorization_required
 from incidents.models import Incident, Comments, Label
-from .models import Quiz, QuizAnswer, QuizTemplate, model_updated
+from .models import Quiz, QuizAnswer, get_or_create_label, get_incident_for_user, get_or_create_quiz
 
 FIELD_MAPPINGS = {
     'django.forms.BooleanField': {
@@ -37,7 +33,8 @@ ALERT_CLASSES = {
         'User Answered': 'alert alert-default',
         'Investigation': 'alert alert-info',
         'Abuse': 'alert alert-danger',
-        'Blocked': 'alert alert-danger'
+        'Blocked': 'alert alert-danger',
+        'Initial': 'alert alert-success',
     },
     'glyphs': {
         'Opened': 'glyphicon glyphicon-plus',
@@ -49,16 +46,45 @@ ALERT_CLASSES = {
         'User Answered': 'glyphicon glyphicon-envelope',
         'Investigation': 'glyphicon glyphicon-zoom-in',
         'Abuse': 'glyphicon glyphicon-flag',
-        'Blocked': 'glyphicon glyphicon-ban-circle'
+        'Blocked': 'glyphicon glyphicon-ban-circle',
+        'Initial': 'glyphicon glyphicon-envelope',
     }
 }
 
 
-# Utility function
+# Utility functions
 def import_from_module(full_name):
     class_name = full_name.split('.')[-1]
     module_name = '.'.join(full_name.split('.')[:-1])
     return getattr(import_module(module_name), class_name)
+
+
+def create_comment_for_answered_quiz(quiz, request):
+    user = request.user if request.user is not None else 'AnonymousUser'
+    ip = get_ip(request)
+
+    quiz_url = build_userinteraction_path(request, quiz.incident_id)
+    full_user = '{}@{}'.format(str(user), str(ip))
+
+    incident = quiz.incident
+    incident.status = 'O'
+    incident.save()
+    Comments.objects.create(incident=quiz.incident,
+                            comment='An incident form has been filled in: <{}>.\n The user that commented is: {}'.format(
+                                quiz_url,
+                                full_user),
+                            action=get_or_create_label('User Answered'),
+                            opened_by=quiz.incident.opened_by)
+
+
+def build_userinteraction_path(request, incident_id):
+    from django.conf import settings
+    incident_suffix = '/incidents/{}'.format(incident_id)
+    if settings.USER_INTERACTION_SERVER:
+        return settings.USER_INTERACTION_SERVER + incident_suffix
+    else:
+        return '/'.join(request.build_absolute_uri().split('/', 4)[:3]) + incident_suffix
+# Form building functions
 
 
 def build_dynamic_form(field_dict, form_id=None, get_class=None, data=None):
@@ -159,7 +185,7 @@ def save_answers(request, quiz, question_groups, formsets):
     if request.user is not None and not isinstance(request.user, AnonymousUser):
         quiz.user = request.user
     quiz.save()
-    model_updated.send(sender=quiz.__class__, instance=quiz, request=request)
+    create_comment_for_answered_quiz(quiz, request)
 
 
 def get_ordered_question_groups(quiz):
@@ -175,27 +201,26 @@ def get_device_artifact_from_quiz(quiz):
     """
     device_artifacts = quiz.incident.artifacts.filter(type='device')
     if device_artifacts:
-        return device_artifacts[0].value
+        return device_artifacts[0].value.upper()
     else:
         return None
 
 
 def render_quiz(request, quiz):
     question_groups = get_ordered_question_groups(quiz)
-    device_artifact = get_device_artifact_from_quiz(quiz).upper()
+    device_artifact = get_device_artifact_from_quiz(quiz)
     formsets = []
     if request.method == 'GET':
         for group in question_groups:
             formsets.append(build_form_from_template(group))
-        return render(request, 'userinteraction/quiz-sets.html',
-                      {
-                       'formsets': formsets,
-                       'names': map(lambda x: x.title, question_groups),
-                       'quiz': quiz,
-                       'alert_classes': ALERT_CLASSES,
-                       'device_artifact': device_artifact,
-                       'comments': quiz.incident.comments_set.order_by('-date')
-                       })
+        return render(request, 'userinteraction/quiz-sets.html', {
+            'formsets': formsets,
+            'names': map(lambda x: x.title, question_groups),
+            'quiz': quiz,
+            'alert_classes': ALERT_CLASSES,
+            'device_artifact': device_artifact,
+            'comments': quiz.incident.comments_set.order_by('-date')
+        })
     else:
         # POST case
         validations = []
@@ -206,13 +231,13 @@ def render_quiz(request, quiz):
             if not is_valid:
                 formsets[-1].add_error(None, 'At least one checkbox needs to be ticked!')
         if len(filter(lambda x: x is False, validations)) > 0:
-            return render(request, 'userinteraction/quiz-sets.html',
-                          {'formsets': formsets,
-                           'names': map(lambda x: x.title, question_groups),
-                           'quiz': quiz,
-                           'device_artifact': device_artifact,
-                           'comments': quiz.incident.comments_set.order_by('-date')
-                           })
+            return render(request, 'userinteraction/quiz-sets.html', {
+                'formsets': formsets,
+                'names': map(lambda x: x.title, question_groups),
+                'quiz': quiz,
+                'device_artifact': device_artifact,
+                'comments': quiz.incident.comments_set.order_by('-date')
+            })
         else:
             # All forms are valid, save the answer and return readonly quiz
             save_answers(request, quiz, question_groups, formsets)
@@ -240,25 +265,6 @@ def render_answered_quiz(request, quiz):
                    'comments': quiz.incident.comments_set.order_by('-date'),
                    'alert_classes': ALERT_CLASSES,
                    'is_incident_handler': is_incident_handler})
-
-
-def get_incident_for_user(authorization_target, incident_id, request):
-    if authorization_target is None:
-        incident = get_object_or_404(
-            Incident.authorization.for_user(request.user, 'incidents.view_incidents'),
-            pk=incident_id)
-    else:
-        incident = authorization_target
-    return incident
-
-
-def get_or_create_quiz(request, incident):
-    try:
-        user_quiz = Quiz.objects.get(incident_id=incident.id)
-    except Quiz.DoesNotExist:
-        template = get_object_or_404(QuizTemplate, category=incident.category)
-        user_quiz = Quiz.objects.create(template=template, incident=incident, user=request.user)
-    return user_quiz
 
 
 # ================================================================================ HTTP VIEWS FROM HERE ON
