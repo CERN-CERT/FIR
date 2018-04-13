@@ -4,5 +4,8 @@
 python manage.py collectstatic --settings fir.config.production --noinput
 python manage.py migrate --settings fir.config.production
 
-# TODO replace with one from here
+# Launch celery worker for app
+celery -A fir_celery.celeryconf worker -l info &
+
+# Launch the app itself
 gunicorn --workers 3 --bind 0.0.0.0:8080 fir.wsgi:application
