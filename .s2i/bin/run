@@ -6,7 +6,7 @@ python manage.py migrate --settings fir.config.production
 
 # Launch celery worker for app
 export DJANGO_SETTINGS_MODULE=fir.config.production
-celery -A fir_celery.celeryconf worker -l info &
+celery -A fir_celery.celeryconf worker -c 1 -l info &
 
 # Launch the app itself
 gunicorn --workers 3 --bind 0.0.0.0:8080 fir.wsgi:application
