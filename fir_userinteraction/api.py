@@ -1,8 +1,8 @@
 # API related stuff
-import json
 from functools import reduce
 
 import markdown2
+import six
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
@@ -15,7 +15,8 @@ from rest_framework.response import Response
 
 from fir_api.permissions import IsIncidentHandler
 from fir_plugins.links import Links
-from fir_userinteraction.models import Quiz, QuizTemplate, QuizWatchListItem, CommentAttachment, get_or_create_label
+from fir_userinteraction.models import Quiz, QuizTemplate, QuizWatchListItem, get_or_create_label, \
+    create_artifact_for_incident
 from fir_userinteraction.serializers import QuizSerializer, QuizTemplateSerializer, EmailSerializer, \
     QuizWatchListItemSerializer, WatchlistSerializer
 from fir_userinteraction.views import build_userinteraction_path
@@ -111,11 +112,14 @@ def subscribe_to_watchlist(request):
         incident.status = 'B'
         incident.save()
 
-        comment = Comments.objects.create(incident=incident,
-                                          comment='Initial notification sent',
-                                          action=get_or_create_label('Initial'),
-                                          opened_by=incident.opened_by)
-        CommentAttachment.objects.create(comment=comment, attachment=json.dumps(extra_data))
+        for key, val in six.iteritems(extra_data):
+            create_artifact_for_incident(incident, artifact_type=key, artifact_value=val)
+
+        incident.save()
+        Comments.objects.create(incident=incident,
+                                comment='Initial notification sent',
+                                action=get_or_create_label('Initial'),
+                                opened_by=incident.opened_by)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

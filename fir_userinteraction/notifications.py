@@ -1,10 +1,11 @@
 """
 Module leveraging fir_notifications in order to notify users regarding actions on their incidents
 """
+from datetime import datetime
+
 from django.core.mail import EmailMessage
 from django.template import Context, Template
-import json
-from datetime import datetime
+import logging
 
 from fir_notifications.methods import NotificationMethod
 
@@ -33,8 +34,7 @@ class AutoNotifyMethod(NotificationMethod):
 
         subject_rendered = Template(template.subject).render(c)
         body_rendered = Template(template.body).render(c)
-        print('Sending mail to: {}, cc: {}'.format(responsible, cc_recipients))
-        print(data_dict)
+        logging.info('Sending mail to: {}, cc: {}'.format(responsible, cc_recipients))
 
         msg = EmailMessage(subject=subject_rendered, body=body_rendered,
                            from_email='noreply@cern.ch',
@@ -63,19 +63,20 @@ class AutoNotifyMethod(NotificationMethod):
         :param incident: incident db entity
         :return: dict of str
         """
+        from fir_userinteraction.models import get_artifacts_for_incident
+
         data_dict = {}
         if action == 'user answered':
             rendered_answers = self.get_rendered_answers(quiz)
-            data_dict = {
+            data_dict.update({
                 'quiz': rendered_answers,
                 'date': comment.date.strftime("%b %d %Y %H:%M:%S"),
                 'incident_name': incident.subject,
                 'incident_desc': incident.description
-            }
+            })
         elif action == 'initial':
-            if hasattr(comment, 'commentattachment'):
-                data_dict = json.loads(comment.commentattachment.attachment)
-                data_dict = render_date_time_field(data_dict)
+            data_dict.update(get_artifacts_for_incident(incident))
+            data_dict = render_date_time_field(data_dict)
         else:
             data_dict = {
                 'comment': comment.comment,
@@ -98,8 +99,7 @@ class AutoNotifyMethod(NotificationMethod):
             self.send_email(data_dict, category_template, quiz.user, watchlist)
 
     def send(self, event, users, instance, paths):
-        print("Sending auto-notify message...")
-        print(event, users, instance, paths)
+        logging.info("Sending auto-notify message: {},{},{},{}".format(event, users, instance, paths))
         if event == 'incident:commented':
             self.handle_incident_comment(instance)
 

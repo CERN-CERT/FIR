@@ -147,19 +147,7 @@ class UsefulLinkOrdering(models.Model):
         ordering = ['-order_index']
 
 
-class CommentAttachment(models.Model):
-    """
-    Sometimes you may need to attach an extra piece of data to a comment in order to create a notification email
-    """
-    comment = models.OneToOneField(Comments, on_delete=models.CASCADE)
-    attachment = models.TextField()
-
-    def __str__(self):
-        return '{} | attachment: {}'.format(self.comment, self.attachment)
-
-
 ## Helper methods
-
 def get_or_create_label(name, group='action'):
     from incidents.models import LabelGroup
     group = LabelGroup.objects.get(name=group)
@@ -189,7 +177,21 @@ def get_or_create_quiz(request, incident):
     return user_quiz
 
 
-# @notification_event('quiz:updated', post_save, Quiz, verbose_name='Quiz updated',
-#                     section='Quiz updated')
-# def incident_created(sender, instance, **kwargs):
-#     return instance, instance.incident.concerned_business_lines
+def create_artifact_for_incident(incident, artifact_type, artifact_value):
+    """
+    Create an artifact for an incident with the specified type and value
+    :param incident:
+    :param artifact_type:
+    :param artifact_value:
+    :return:
+    """
+    return incident.artifacts.create(type=artifact_type, value=artifact_value)
+
+
+def get_artifacts_for_incident(incident):
+    """
+    Return a dictionary mapping artifact types to values for this specific incident
+    :param incident: incident model
+    :return: dict of artifacts
+    """
+    return {artifact.type: artifact.value for artifact in incident.artifacts.all()}

@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from fir_userinteraction.models import Question, Quiz, QuizTemplate, QuizAnswer, QuestionGroup, QuizGroupQuestionOrder, \
-    QuizTemplateQuestionGroupOrder, QuizWatchListItem, QuizTemplateUsefulLink, UsefulLinkOrdering, CommentAttachment
+    QuizTemplateQuestionGroupOrder, QuizWatchListItem, QuizTemplateUsefulLink, UsefulLinkOrdering
 
 
 class QuizGroupQuestionOrderInline(admin.TabularInline):
@@ -31,13 +31,8 @@ class QuizTemplateAdmin(admin.ModelAdmin):
     inlines = (QuizTemplateQuestionGroupOrderInline, UsefulLinkInline, )
 
 
-class CommentAttachmentAdmin(admin.ModelAdmin):
-    list_display = ['comment', 'attachment']
-
-
 admin.site.register(QuizTemplate, QuizTemplateAdmin)
 admin.site.register(QuestionGroup, QuestionGroupAdmin)
-admin.site.register(CommentAttachment, CommentAttachmentAdmin)
 admin.site.register(Quiz)
 admin.site.register(QuizAnswer)
 admin.site.register(Question)
