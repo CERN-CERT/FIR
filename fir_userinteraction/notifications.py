@@ -78,6 +78,7 @@ class AutoNotifyMethod(NotificationMethod):
             data_dict.update(get_artifacts_for_incident(incident))
             data_dict = render_date_time_field(data_dict)
         else:
+            data_dict.update(get_artifacts_for_incident(incident))
             data_dict = {
                 'comment': comment.comment,
                 'incident': incident

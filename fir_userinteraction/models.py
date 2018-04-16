@@ -147,7 +147,7 @@ class UsefulLinkOrdering(models.Model):
         ordering = ['-order_index']
 
 
-## Helper methods
+# Helper methods
 def get_or_create_label(name, group='action'):
     from incidents.models import LabelGroup
     group = LabelGroup.objects.get(name=group)
