@@ -2,6 +2,7 @@
 from functools import reduce
 
 import markdown2
+import logging
 import six
 from django.conf import settings
 from django.core.mail import send_mail
@@ -20,7 +21,7 @@ from fir_userinteraction.models import Quiz, QuizTemplate, QuizWatchListItem, ge
 from fir_userinteraction.serializers import QuizSerializer, QuizTemplateSerializer, EmailSerializer, \
     QuizWatchListItemSerializer, WatchlistSerializer
 from fir_userinteraction.views import build_userinteraction_path
-from incidents.models import Comments
+from incidents.models import Comments, BusinessLine
 
 
 class QuizViewSet(viewsets.ModelViewSet):
@@ -97,8 +98,12 @@ def subscribe_to_watchlist(request):
     serializer = WatchlistSerializer(data=request.data)
     if serializer.is_valid():
         qz = Quiz.objects.get(id=serializer.validated_data['form_id'])
-        for mail in serializer.validated_data['emails']:
-            QuizWatchListItem.objects.create(email=mail, quiz=qz)
+        for bl in serializer.validated_data['business_lines']:
+            try:
+                bl_obj = BusinessLine.objects.get(id=bl)
+                QuizWatchListItem.objects.create(business_line=bl_obj, quiz=qz)
+            except BusinessLine.DoesNotExist:
+                logging.error('Business line: {} does not exist'.format(bl))
 
         extra_data = {
             'name': serializer.validated_data['name'],

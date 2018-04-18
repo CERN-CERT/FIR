@@ -7,17 +7,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.shortcuts import get_object_or_404
 
-from incidents.models import Incident, IncidentCategory, Comments, Label
-
-QUESTION_FIELD_TYPES = (
-    ('django.forms.CharField', 'Char'),
-    ('django.forms.BooleanField', 'Bool')
-)
-
-QUESTION_WIDGET_TYPES = (
-    ('django.forms.Textarea', 'Text Area'),
-    ('django.forms.CheckboxInput', 'Check Box')
-)
+from incidents.models import Incident, IncidentCategory, Comments, Label, SEVERITY_CHOICES, BusinessLine
+from fir_userinteraction.constants import GLOBAL_CATEGORY_NAME, QUESTION_FIELD_TYPES, QUESTION_WIDGET_TYPES
 
 
 # Create your models here.
@@ -118,10 +109,11 @@ class QuizAnswer(models.Model):
 # Watchlist for any action performed
 class QuizWatchListItem(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    email = models.CharField(max_length=100, help_text='Email address for the watchlist')
+    business_line = models.ForeignKey(BusinessLine, on_delete=models.CASCADE,
+                                      help_text='Business Line for the watchlist')
 
     def __str__(self):
-        return '{} - Quiz: "{}", incident: {}'.format(self.email, self.quiz.id, self.quiz.incident.id)
+        return '{} - Quiz: "{}", incident: {}'.format(self.business_line.name, self.quiz.id, self.quiz.incident.id)
 
 
 class QuizTemplateUsefulLink(models.Model):
@@ -145,6 +137,15 @@ class UsefulLinkOrdering(models.Model):
 
     class Meta:
         ordering = ['-order_index']
+
+
+class AutoNotifyDuration(models.Model):
+    duration = models.DurationField()
+    severity = models.IntegerField(choices=SEVERITY_CHOICES)
+    category = models.ForeignKey(IncidentCategory)
+
+    def __str__(self):
+        return 'category: {}| severity: {}'.format(self.category, self.severity)
 
 
 # Helper methods
@@ -195,3 +196,14 @@ def get_artifacts_for_incident(incident):
     :return: dict of artifacts
     """
     return {artifact.type: artifact.value for artifact in incident.artifacts.all()}
+
+
+def get_or_create_global_category():
+    """
+    This is the global category of incidents, used to store some of the common notifications
+    :return: global incident category DB entity
+    """
+    try:
+        return IncidentCategory.objects.get(name=GLOBAL_CATEGORY_NAME, bale_subcategory_id=0)
+    except IncidentCategory.DoesNotExist:
+        return IncidentCategory.objects.create(name=GLOBAL_CATEGORY_NAME, bale_subcategory_id=0)

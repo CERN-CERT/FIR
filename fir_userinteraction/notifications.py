@@ -5,6 +5,9 @@ from datetime import datetime
 
 from django.core.mail import EmailMessage
 from django.template import Context, Template
+from fir_userinteraction.constants import USERS_BL, GROUPS_BL
+from certsoclib.params import LDAP_USER_SEARCH, LDAP_GROUP_SEARCH
+from certsoclib.ldap_connector import LdapConnector
 import logging
 
 from fir_notifications.methods import NotificationMethod
@@ -18,6 +21,41 @@ def render_date_time_field(data_dict):
     return data_dict
 
 
+def get_base_business_line(bl):
+    result_bl = bl
+    while result_bl.get_parent() is not None:
+        result_bl = result_bl.get_parent()
+    return result_bl
+
+
+def get_query_type_from_base_bl(bl):
+    base_bl = get_base_business_line(bl)
+    if base_bl.name == USERS_BL:
+        return LDAP_USER_SEARCH
+    elif base_bl.name == GROUPS_BL:
+        return LDAP_GROUP_SEARCH
+
+
+def get_user_mail_from_ldap(user):
+    con = LdapConnector()
+    ldap_result = filter(lambda x: x.cn == user.username,
+                         con.search_in_ldap(user.username, query_type=LDAP_USER_SEARCH))
+    if ldap_result:
+        return ldap_result[0].mail
+    return user.mail
+
+
+def get_bl_mails_from_ldap(bls):
+    con = LdapConnector()
+    results = []
+    for bl in bls:
+        ldap_result = filter(lambda x: x.cn == bl.name,
+                             con.search_in_ldap(bl.name, query_type=get_query_type_from_base_bl(bl)))
+        if ldap_result:
+            results.append(ldap_result[0].mail)
+    return results
+
+
 class AutoNotifyMethod(NotificationMethod):
     use_subject = True
     use_description = True
@@ -29,16 +67,16 @@ class AutoNotifyMethod(NotificationMethod):
         self.server_configured = True
 
     @staticmethod
-    def send_email(data_dict, template, responsible, cc_recipients):
+    def send_email(data_dict, template, responsible_mail, cc_recipients):
         c = Context(data_dict)
 
         subject_rendered = Template(template.subject).render(c)
         body_rendered = Template(template.body).render(c)
-        logging.info('Sending mail to: {}, cc: {}'.format(responsible, cc_recipients))
+        logging.info('Sending mail to: {}, cc: {}'.format(responsible_mail, cc_recipients))
 
         msg = EmailMessage(subject=subject_rendered, body=body_rendered,
                            from_email='noreply@cern.ch',
-                           to=[responsible.email],
+                           to=[responsible_mail],
                            cc=cc_recipients)
         msg.content_subtype = 'html'
         msg.send()
@@ -53,6 +91,26 @@ class AutoNotifyMethod(NotificationMethod):
             response += answer.question.label + '\n\n'
 
         return response
+
+    @staticmethod
+    def get_category_templates(incident, action):
+        """
+        Get the category templates for an incident's category and the last action. If none are found
+        then return the global category templates (if they exist). Otherwise, an empty list is returned
+        :param incident: incident model from the db
+        :param action: name of the last action
+        :return:
+        """
+        from fir_userinteraction.models import get_or_create_global_category
+
+        global_category = get_or_create_global_category()
+        category_templates = incident.category.categorytemplate_set.filter(type=action)
+        global_category_templates = global_category.categorytemplate_set.filter(type=action)
+        if category_templates:
+            return category_templates
+        elif global_category_templates:
+            return global_category_templates
+        return []
 
     def populate_data_dict(self, comment, action, quiz, incident):
         """
@@ -79,25 +137,31 @@ class AutoNotifyMethod(NotificationMethod):
             data_dict = render_date_time_field(data_dict)
         else:
             data_dict.update(get_artifacts_for_incident(incident))
-            data_dict = {
+            data_dict.update({
                 'comment': comment.comment,
                 'incident': incident
-            }
+            })
         data_dict['username'] = quiz.user.username
         return data_dict
+
+    @staticmethod
+    def populate_watchlist_from_ldap(quiz):
+        watchlist_bls = [wl.business_line for wl in quiz.quizwatchlistitem_set.all()]
+        return get_bl_mails_from_ldap(watchlist_bls)
 
     def handle_incident_comment(self, instance):
         action = instance.action.name.lower()
         incident = instance.incident
-        category_template = incident.category.categorytemplate_set.filter(type=action)
+        category_templates = self.get_category_templates(incident, action)
 
-        if hasattr(incident, 'quiz') and len(category_template) > 0:
-            category_template = category_template[0]
+        if hasattr(incident, 'quiz') and len(category_templates) > 0:
+            category_template = category_templates[0]
             quiz = incident.quiz
-            watchlist = [item.email for item in quiz.quizwatchlistitem_set.all()]
+            watchlist = self.populate_watchlist_from_ldap(quiz)
+            user_mail = get_user_mail_from_ldap(quiz.user)
             data_dict = self.populate_data_dict(instance, action, quiz, incident)
 
-            self.send_email(data_dict, category_template, quiz.user, watchlist)
+            self.send_email(data_dict, category_template, user_mail, watchlist)
 
     def send(self, event, users, instance, paths):
         logging.info("Sending auto-notify message: {},{},{},{}".format(event, users, instance, paths))

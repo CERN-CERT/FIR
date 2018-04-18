@@ -1,28 +1,33 @@
 from __future__ import absolute_import, unicode_literals
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from django.conf import settings
 from django.db.models import Q
 
-from fir_userinteraction.models import get_or_create_label
+from fir_userinteraction.models import get_or_create_label, get_or_create_global_category, AutoNotifyDuration
 from incidents.models import Incident, Comments
 
 
-def get_configured_max_time():
-    threshold = 7
-    if hasattr(settings, 'CELERY_RENOTIFICATION_THRESHOLD'):
-        threshold = settings.CELERY_RENOTIFICATION_THRESHOLD
+def get_configured_max_time(incident):
+    threshold = timedelta(days=7)
+    global_category = get_or_create_global_category()
+    auto_notify_durations = AutoNotifyDuration.objects.filter(category=incident.category,
+                                                              severity=incident.severity)
+    global_auto_notify_durations = AutoNotifyDuration.objects.filter(category=global_category,
+                                                                     severity=incident.severity)
+    if auto_notify_durations:
+        threshold = auto_notify_durations[0].duration
+    elif global_auto_notify_durations:
+        threshold = global_auto_notify_durations[0].duration
     return threshold
 
 
 def check_incident_response_time(incident):
-    max_threshold = get_configured_max_time()
+    max_threshold = get_configured_max_time(incident)
     last_comment_time = incident.get_last_comment().date
-    days_difference = abs(datetime.now() - last_comment_time).days - max_threshold
-    if days_difference >= 0:
+    if abs(datetime.now() - last_comment_time) > max_threshold:
         return True
     return False
 
@@ -36,11 +41,12 @@ def check_for_renotification():
     logger = get_task_logger(__name__)
     incidents = Incident.objects.filter(Q(quiz__is_answered=False) & (Q(status='O') | Q(status='B')))
     incidents_to_renotify = list(filter(lambda i: check_incident_response_time(i), incidents))
-
+    global_category = get_or_create_global_category()
     for incident in incidents_to_renotify:
         action = 'renotify{}'.format(incident.severity)
         category_templates = incident.category.categorytemplate_set.filter(type=action)
-        if category_templates:
+        global_category_templates = global_category.categorytemplate_set.filter(type=action)
+        if category_templates or global_category_templates:
             Comments.objects.create(incident=incident,
                                     comment='Renotification of severity {}'.format(incident.severity),
                                     action=get_or_create_label(action.capitalize()),

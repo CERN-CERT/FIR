@@ -45,8 +45,8 @@ class WatchlistSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         pass
 
-    emails = serializers.ListField(
-        child=serializers.CharField(allow_null=False)
+    business_lines = serializers.ListField(
+        child=serializers.IntegerField(allow_null=False)
     )
     form_id = serializers.CharField(allow_null=False)
     device = serializers.CharField(allow_null=False)

@@ -2,3 +2,5 @@ django-bootstrap-form
 django-ipware
 django-markdownx
 celery
+python-ldap
+cert-soc-lib
