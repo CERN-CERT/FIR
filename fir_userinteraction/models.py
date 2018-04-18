@@ -108,8 +108,8 @@ class QuizAnswer(models.Model):
 
 # Watchlist for any action performed
 class QuizWatchListItem(models.Model):
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    business_line = models.ForeignKey(BusinessLine, on_delete=models.CASCADE,
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, blank=True, null=True)
+    business_line = models.ForeignKey(BusinessLine, on_delete=models.CASCADE, blank=True, null=True,
                                       help_text='Business Line for the watchlist')
 
     def __str__(self):
