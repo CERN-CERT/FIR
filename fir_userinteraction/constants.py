@@ -2,6 +2,7 @@
 Constants defined for various usages, to avoid hard-coding of strings in the app
 """
 
+OTHER_BALE_CATEGORY_NAME = 'Other'
 GLOBAL_CATEGORY_NAME = 'Global'
 
 QUESTION_FIELD_TYPES = (

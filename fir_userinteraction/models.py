@@ -7,8 +7,9 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.shortcuts import get_object_or_404
 
-from incidents.models import Incident, IncidentCategory, Comments, Label, SEVERITY_CHOICES, BusinessLine
-from fir_userinteraction.constants import GLOBAL_CATEGORY_NAME, QUESTION_FIELD_TYPES, QUESTION_WIDGET_TYPES
+from incidents.models import Incident, IncidentCategory, Comments, Label, SEVERITY_CHOICES, BusinessLine, BaleCategory
+from fir_userinteraction.constants import GLOBAL_CATEGORY_NAME, QUESTION_FIELD_TYPES, QUESTION_WIDGET_TYPES, \
+    OTHER_BALE_CATEGORY_NAME
 
 
 # Create your models here.
@@ -203,7 +204,12 @@ def get_or_create_global_category():
     This is the global category of incidents, used to store some of the common notifications
     :return: global incident category DB entity
     """
+
     try:
-        return IncidentCategory.objects.get(name=GLOBAL_CATEGORY_NAME, bale_subcategory_id=0)
+        bale_category = BaleCategory.objects.get(name=OTHER_BALE_CATEGORY_NAME)
+    except BaleCategory.DoesNotExist:
+        bale_category = BaleCategory.objects.create(name=OTHER_BALE_CATEGORY_NAME, category_number=0)
+    try:
+        return IncidentCategory.objects.get(name=GLOBAL_CATEGORY_NAME, bale_subcategory=bale_category)
     except IncidentCategory.DoesNotExist:
-        return IncidentCategory.objects.create(name=GLOBAL_CATEGORY_NAME, bale_subcategory_id=0)
+        return IncidentCategory.objects.create(name=GLOBAL_CATEGORY_NAME, bale_subcategory=bale_category)
