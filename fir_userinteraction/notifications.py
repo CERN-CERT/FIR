@@ -36,12 +36,12 @@ def get_query_type_from_base_bl(bl):
         return LDAP_GROUP_SEARCH
 
 
-def get_user_mail_from_ldap(user):
+def get_user_from_ldap(user):
     con = LdapConnector()
     ldap_result = filter(lambda x: x.cn == user.username,
                          con.search_in_ldap(user.username, query_type=LDAP_USER_SEARCH))
     if ldap_result:
-        return ldap_result[0].mail
+        return ldap_result[0]
     return user.mail
 
 
@@ -112,13 +112,30 @@ class AutoNotifyMethod(NotificationMethod):
             return global_category_templates
         return []
 
-    def populate_data_dict(self, comment, action, quiz, incident):
+    @staticmethod
+    def build_unauthorized_incident_url(user_account_enabled, quiz, data_dict):
+        """
+        If the user is disabled, the incident URL has to be changed
+        :param user_account_enabled: boolean representing user state
+        :param quiz: the quiz assigned to the user
+        :param data_dict: the dictionary with which to populate the data
+        :return: the updated dictionary
+        """
+        if not user_account_enabled and 'incident_url' in data_dict:
+            unauthenticated_url = ('/'.join(data_dict['incident_url'].split('/')[:3]) +
+                                   '/' + '/'.join(['form', str(quiz.id)]))
+            data_dict['incident_url'] = unauthenticated_url
+
+        return data_dict
+
+    def populate_data_dict(self, comment, action, quiz, incident, user_account_enabled):
         """
         Build a context for populating the email template
         :param comment: the comment db item
         :param action: string denoting the action that took place
         :param quiz: the quiz db item
         :param incident: incident db entity
+        :param user_account_enabled: boolean telling if the user is enabled or not
         :return: dict of str
         """
         from fir_userinteraction.models import get_artifacts_for_incident
@@ -142,6 +159,7 @@ class AutoNotifyMethod(NotificationMethod):
                 'incident': incident
             })
         data_dict['username'] = quiz.user.username
+        data_dict = self.build_unauthorized_incident_url(user_account_enabled, quiz, data_dict)
         return data_dict
 
     @staticmethod
@@ -158,10 +176,10 @@ class AutoNotifyMethod(NotificationMethod):
             category_template = category_templates[0]
             quiz = incident.quiz
             watchlist = self.populate_watchlist_from_ldap(quiz)
-            user_mail = get_user_mail_from_ldap(quiz.user)
-            data_dict = self.populate_data_dict(instance, action, quiz, incident)
+            user = get_user_from_ldap(quiz.user)
+            data_dict = self.populate_data_dict(instance, action, quiz, incident, user.account_enabled())
 
-            self.send_email(data_dict, category_template, user_mail, watchlist)
+            self.send_email(data_dict, category_template, user.mail, watchlist)
 
     def send(self, event, users, instance, paths):
         logging.info("Sending auto-notify message: {},{},{},{}".format(event, users, instance, paths))
