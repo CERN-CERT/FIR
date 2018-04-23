@@ -73,7 +73,7 @@ class BusinessLineViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(name=name)
         return queryset
 
-    @list_route(methods=['get'], url_path='by_name/(?P<name>\w+)')
+    @list_route(methods=['get'], url_path='by_name/(?P<name>.+)')
     def get_by_name(self, request, name):
         bl = get_object_or_404(BusinessLine, name=name)
         return Response(BusinessLineSerializer(bl, context={'request': request}).data, status=status.HTTP_200_OK)
