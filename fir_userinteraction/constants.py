@@ -17,3 +17,5 @@ QUESTION_WIDGET_TYPES = (
 
 USERS_BL = 'Users'
 GROUPS_BL = 'Groups'
+
+INCIDENT_VIEWERS_ROLE = 'Incident viewers'

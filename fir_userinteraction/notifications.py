@@ -68,18 +68,23 @@ class AutoNotifyMethod(NotificationMethod):
 
     @staticmethod
     def send_email(data_dict, template, responsible_mail, cc_recipients):
+        from django.conf import settings
         c = Context(data_dict)
+        sender_email = 'noreply@cern.ch'
+        if hasattr(settings, 'EMAIL_FROM') and settings.EMAIL_FROM:
+            sender_email = settings.EMAIL_FROM
 
         subject_rendered = Template(template.subject).render(c)
         body_rendered = Template(template.body).render(c)
         logging.info('Sending mail to: {}, cc: {}'.format(responsible_mail, cc_recipients))
 
         msg = EmailMessage(subject=subject_rendered, body=body_rendered,
-                           from_email='noreply@cern.ch',
+                           from_email=sender_email,
                            to=[responsible_mail],
                            cc=cc_recipients)
         msg.content_subtype = 'html'
-        msg.send()
+        response = msg.send()
+        logging.info('Sent a number of {} emails'.format(response))
 
     @staticmethod
     def get_rendered_answers(quiz):
