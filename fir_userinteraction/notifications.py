@@ -133,14 +133,14 @@ class AutoNotifyMethod(NotificationMethod):
 
         return data_dict
 
-    def populate_data_dict(self, comment, action, quiz, incident, user_account_enabled):
+    def populate_data_dict(self, comment, action, quiz, incident, ldap_user):
         """
         Build a context for populating the email template
         :param comment: the comment db item
         :param action: string denoting the action that took place
         :param quiz: the quiz db item
         :param incident: incident db entity
-        :param user_account_enabled: boolean telling if the user is enabled or not
+        :param ldap_user: LdapEntity object from certsoclib
         :return: dict of str
         """
         from fir_userinteraction.models import get_artifacts_for_incident
@@ -164,7 +164,8 @@ class AutoNotifyMethod(NotificationMethod):
                 'incident': incident
             })
         data_dict['username'] = quiz.user.username
-        data_dict = self.build_unauthorized_incident_url(user_account_enabled, quiz, data_dict)
+        data_dict['ldap_egroup'] = (ldap_user.get_type() == LDAP_GROUP_SEARCH)
+        data_dict = self.build_unauthorized_incident_url(ldap_user.account_enabled(), quiz, data_dict)
         return data_dict
 
     @staticmethod
@@ -181,10 +182,10 @@ class AutoNotifyMethod(NotificationMethod):
             category_template = category_templates[0]
             quiz = incident.quiz
             watchlist = self.populate_watchlist_from_ldap(quiz)
-            user = get_user_from_ldap(quiz.user)
-            data_dict = self.populate_data_dict(instance, action, quiz, incident, user.account_enabled())
+            ldap_user = get_user_from_ldap(quiz.user)
+            data_dict = self.populate_data_dict(instance, action, quiz, incident, ldap_user)
 
-            self.send_email(data_dict, category_template, user.mail, watchlist)
+            self.send_email(data_dict, category_template, ldap_user.mail, watchlist)
 
     def send(self, event, users, instance, paths):
         logging.info("Sending auto-notify message: {},{},{},{}".format(event, users, instance, paths))
