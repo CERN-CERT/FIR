@@ -74,7 +74,7 @@ def create_comment_for_answered_quiz(quiz, request):
                                 quiz_url,
                                 full_user),
                             action=get_or_create_label('User Answered'),
-                            opened_by=quiz.incident.opened_by)
+                            opened_by=user)
 
 
 def build_userinteraction_path(request, incident_id):
@@ -182,8 +182,6 @@ def save_answers(request, quiz, question_groups, formsets):
             print('Created answer: {}'.format(str(answer)))
 
     quiz.is_answered = True
-    if request.user is not None and not isinstance(request.user, AnonymousUser):
-        quiz.user = request.user
     quiz.save()
     create_comment_for_answered_quiz(quiz, request)
 
