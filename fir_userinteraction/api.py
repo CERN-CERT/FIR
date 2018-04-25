@@ -16,11 +16,11 @@ from rest_framework.response import Response
 
 from fir_api.permissions import IsIncidentHandler
 from fir_plugins.links import Links
+from fir_userinteraction.helpers import build_userinteraction_path
 from fir_userinteraction.models import Quiz, QuizTemplate, QuizWatchListItem, get_or_create_label, \
     create_artifact_for_incident
 from fir_userinteraction.serializers import QuizSerializer, QuizTemplateSerializer, EmailSerializer, \
     QuizWatchListItemSerializer, WatchlistSerializer
-from fir_userinteraction.views import build_userinteraction_path
 from incidents.models import Comments, BusinessLine
 
 

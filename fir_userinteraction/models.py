@@ -6,10 +6,12 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.shortcuts import get_object_or_404
+from ipware.ip import get_ip
 
-from incidents.models import Incident, IncidentCategory, Comments, Label, SEVERITY_CHOICES, BusinessLine, BaleCategory
 from fir_userinteraction.constants import GLOBAL_CATEGORY_NAME, QUESTION_FIELD_TYPES, QUESTION_WIDGET_TYPES, \
     OTHER_BALE_CATEGORY_NAME
+from fir_userinteraction.helpers import build_userinteraction_path
+from incidents.models import Incident, IncidentCategory, Label, SEVERITY_CHOICES, BusinessLine, BaleCategory, Comments
 
 
 # Create your models here.
@@ -213,3 +215,27 @@ def get_or_create_global_category():
         return IncidentCategory.objects.get(name=GLOBAL_CATEGORY_NAME, bale_subcategory=bale_category)
     except IncidentCategory.DoesNotExist:
         return IncidentCategory.objects.create(name=GLOBAL_CATEGORY_NAME, bale_subcategory=bale_category)
+
+
+def create_comment_for_answered_quiz(quiz, request):
+    """
+    Take the quiz and the request and build the 'user answered comment'
+    :param quiz: The quiz db entity
+    :param request: The current django request
+    """
+    user = request.user if request.user is not None else 'AnonymousUser'
+    ip = get_ip(request)
+
+    quiz_url = build_userinteraction_path(request, quiz.incident_id)
+    full_user = '{}@{}'.format(str(user), str(ip))
+
+    incident = quiz.incident
+    incident.status = 'O'
+    incident.save()
+    Comments.objects.create(incident=quiz.incident,
+                            comment='An incident form has been filled in: <{}>.\n The user that commented is: {}'.format(
+                                quiz_url,
+                                full_user),
+                            action=get_or_create_label('User Answered'),
+                            opened_by=user)
+

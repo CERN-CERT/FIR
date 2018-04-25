@@ -1,92 +1,22 @@
-from importlib import import_module
-
+import six
 from django import forms
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
 from django.forms.utils import ErrorDict
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods
-from ipware.ip import get_ip
 
+from fir_userinteraction.constants import ALERT_CLASSES
+from fir_userinteraction.helpers import import_from_module
 from incidents.authorization.decorator import authorization_required
 from incidents.models import Incident, Comments, Label
-from .models import Quiz, QuizAnswer, get_or_create_label, get_incident_for_user, get_or_create_quiz
-
-FIELD_MAPPINGS = {
-    'django.forms.BooleanField': {
-        'on': True,
-        'off': False
-    }
-}
-
-ALERT_CLASSES = {
-    'labels': {
-        'Opened': 'alert alert-info',
-        'Closed': 'alert alert-success',
-        'Info': 'alert alert-info',
-        'Monitor': 'alert alert-warning',
-        'Alerting': 'alert alert-success',
-        'Takedown': 'alert alert-warning',
-        'User Answered': 'alert alert-default',
-        'Investigation': 'alert alert-info',
-        'Abuse': 'alert alert-danger',
-        'Blocked': 'alert alert-danger',
-        'Initial': 'alert alert-success',
-    },
-    'glyphs': {
-        'Opened': 'glyphicon glyphicon-plus',
-        'Closed': 'glyphicon glyphicon-remove',
-        'Info': 'glyphicon glyphicon-info-sign',
-        'Monitor': 'glyphicon glyphicon-eye-open',
-        'Alerting': 'glyphicon glyphicon-exclamation-sign',
-        'Takedown': 'glyphicon glyphicon-envelope',
-        'User Answered': 'glyphicon glyphicon-envelope',
-        'Investigation': 'glyphicon glyphicon-zoom-in',
-        'Abuse': 'glyphicon glyphicon-flag',
-        'Blocked': 'glyphicon glyphicon-ban-circle',
-        'Initial': 'glyphicon glyphicon-envelope',
-    }
-}
+from .models import Quiz, QuizAnswer, get_incident_for_user, get_or_create_quiz, \
+    create_comment_for_answered_quiz
 
 
-# Utility functions
-def import_from_module(full_name):
-    class_name = full_name.split('.')[-1]
-    module_name = '.'.join(full_name.split('.')[:-1])
-    return getattr(import_module(module_name), class_name)
-
-
-def create_comment_for_answered_quiz(quiz, request):
-    user = request.user if request.user is not None else 'AnonymousUser'
-    ip = get_ip(request)
-
-    quiz_url = build_userinteraction_path(request, quiz.incident_id)
-    full_user = '{}@{}'.format(str(user), str(ip))
-
-    incident = quiz.incident
-    incident.status = 'O'
-    incident.save()
-    Comments.objects.create(incident=quiz.incident,
-                            comment='An incident form has been filled in: <{}>.\n The user that commented is: {}'.format(
-                                quiz_url,
-                                full_user),
-                            action=get_or_create_label('User Answered'),
-                            opened_by=user)
-
-
-def build_userinteraction_path(request, incident_id):
-    from django.conf import settings
-    incident_suffix = '/incidents/{}'.format(incident_id)
-    if settings.USER_INTERACTION_SERVER:
-        return settings.USER_INTERACTION_SERVER + incident_suffix
-    else:
-        return '/'.join(request.build_absolute_uri().split('/', 4)[:3]) + incident_suffix
 # Form building functions
-
-
 def build_dynamic_form(field_dict, form_id=None, get_class=None, data=None):
     class_name = 'DynForm'
     if form_id:
@@ -167,7 +97,8 @@ def validate_formset(question_group, formset):
         # Needed to unset all of the errors
         formset._errors = ErrorDict()
         formset.cleaned_data = formset.data
-        if not (any(answers)) or not ('on' in answers.itervalues()):
+
+        if not (any(answers)) or not ('on' in six.itervalues(answers)):
             return False
     return True
 

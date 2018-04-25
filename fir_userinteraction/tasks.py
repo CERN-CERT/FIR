@@ -8,10 +8,13 @@ from django.db.models import Q
 
 from fir_userinteraction.models import get_or_create_label, get_or_create_global_category, AutoNotifyDuration
 from incidents.models import Incident, Comments
+from fir_userinteraction.helpers import get_django_setting_or_default
 
 
 def get_configured_max_time(incident):
-    threshold = timedelta(days=7)
+
+    days = get_django_setting_or_default('UI_DEFAULT_MAX_DAYS', 7)
+    threshold = timedelta(days=days)
     global_category = get_or_create_global_category()
     auto_notify_durations = AutoNotifyDuration.objects.filter(category=incident.category,
                                                               severity=incident.severity)
@@ -36,10 +39,10 @@ def check_incident_response_time(incident):
 def check_for_renotification():
     """
     Celery task that looks through the database and renotifies users if they have been inactive for a period of time
-    logn enough
+    long enough
     """
     logger = get_task_logger(__name__)
-    incidents = Incident.objects.filter(Q(quiz__is_answered=False) & (Q(status='O') | Q(status='B')))
+    incidents = Incident.objects.filter(Q(status='B'))
     incidents_to_renotify = list(filter(lambda i: check_incident_response_time(i), incidents))
     global_category = get_or_create_global_category()
     for incident in incidents_to_renotify:
@@ -52,6 +55,6 @@ def check_for_renotification():
                                     action=get_or_create_label(action.capitalize()),
                                     opened_by=incident.opened_by)
         else:
-            logger.info('Unable to send renotify message, no template defined for: {}'.format(action))
+            logger.warning('Unable to send renotify message, no template defined for: {}'.format(action))
     else:
         logger.info('Done with the renotifications')

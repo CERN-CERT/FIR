@@ -1,0 +1,5 @@
+[cc7-cernonly]
+name=CC7-CERNOnly
+baseurl=http://linuxsoft.cern.ch/cern/centos/7/cernonly/x86_64
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-cern
+enabled=1

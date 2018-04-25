@@ -1,23 +1,28 @@
 """
 Module leveraging fir_notifications in order to notify users regarding actions on their incidents
 """
-from datetime import datetime
 
-from django.core.mail import EmailMessage
-from django.template import Context, Template
-from fir_userinteraction.constants import USERS_BL, GROUPS_BL
-from certsoclib.params import LDAP_USER_SEARCH, LDAP_GROUP_SEARCH
-from certsoclib.ldap_connector import LdapConnector
 import logging
 
+import pytz
+from certsoclib.ldap_connector import LdapConnector
+from certsoclib.params import LDAP_USER_SEARCH, LDAP_GROUP_SEARCH
+from dateutil.parser import parse
+from django.core.mail import EmailMessage
+from django.template import Context, Template
+
 from fir_notifications.methods import NotificationMethod
+from fir_userinteraction.constants import USERS_BL, GROUPS_BL, QUIZ_ANSWER_CATEGORY_TEMPLATE
+from fir_userinteraction.helpers import get_django_setting_or_default
 
 
 def render_date_time_field(data_dict):
     date = data_dict.get('date')
+    tz = pytz.timezone(get_django_setting_or_default('TIME_ZONE', 'Europe/Zurich'))
+    ui_date_format = get_django_setting_or_default('UI_DATE_FORMAT', "%b %d %Y %H:%M:%S")
     if date:
-        date = date[:-1] if date.endswith('Z') else date
-        data_dict['date'] = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S').strftime("%b %d %Y %H:%M:%S")
+        date = parse(date).astimezone(tz)
+        data_dict['date'] = date.strftime(ui_date_format)
     return data_dict
 
 
@@ -68,11 +73,8 @@ class AutoNotifyMethod(NotificationMethod):
 
     @staticmethod
     def send_email(data_dict, template, responsible_mail, cc_recipients):
-        from django.conf import settings
         c = Context(data_dict)
-        sender_email = 'noreply@cern.ch'
-        if hasattr(settings, 'EMAIL_FROM') and settings.EMAIL_FROM:
-            sender_email = settings.EMAIL_FROM
+        sender_email = get_django_setting_or_default('EMAIL_FROM', 'noreply@cern.ch')
 
         subject_rendered = Template(template.subject).render(c)
         body_rendered = Template(template.body).render(c)
@@ -89,13 +91,15 @@ class AutoNotifyMethod(NotificationMethod):
     @staticmethod
     def get_rendered_answers(quiz):
         from fir_userinteraction.models import QuizAnswer
-        answers = QuizAnswer.objects.filter(quiz_id=quiz.id)
-        response = ''
-        for answer in answers:
-            response += '* ' + answer.question_group.title + '\n'
-            response += answer.question.label + '\n\n'
+        from fir_userinteraction.models import get_or_create_global_category
 
-        return response
+        global_category = get_or_create_global_category()
+        quiz_answer_template = global_category.categorytemplate_set.get(type=QUIZ_ANSWER_CATEGORY_TEMPLATE)
+        answers = QuizAnswer.objects.filter(quiz_id=quiz.id)
+
+        c = Context(dict(answers=answers))
+        rendered_template = Template(quiz_answer_template.body).render(c)
+        return rendered_template
 
     @staticmethod
     def get_category_templates(incident, action):
@@ -144,13 +148,13 @@ class AutoNotifyMethod(NotificationMethod):
         :return: dict of str
         """
         from fir_userinteraction.models import get_artifacts_for_incident
-
+        ui_date_format = get_django_setting_or_default('UI_DATE_FORMAT', "%b %d %Y %H:%M:%S")
         data_dict = {}
         if action == 'user answered':
             rendered_answers = self.get_rendered_answers(quiz)
             data_dict.update({
                 'quiz': rendered_answers,
-                'date': comment.date.strftime("%b %d %Y %H:%M:%S"),
+                'date': comment.date.strftime(ui_date_format),
                 'incident_name': incident.subject,
                 'incident_desc': incident.description
             })
