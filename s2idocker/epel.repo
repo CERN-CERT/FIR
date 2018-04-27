@@ -18,4 +18,3 @@ baseurl=http://linuxsoft.cern.ch/epel/7/SRPMS
 enabled=0
 gpgkey=http://linuxsoft.cern.ch/epel/RPM-GPG-KEY-EPEL-7
 gpgcheck=1
-

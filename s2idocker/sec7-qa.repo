@@ -2,5 +2,5 @@
 name=Utilities for the Agile Infrastructure project (Security tools) [QA]
 baseurl=http://linuxsoft.cern.ch/internal/repos/sec7-qa/x86_64/os
 enabled=1
-gpgcheck=0
+gpgcheck=1
 priority=10
