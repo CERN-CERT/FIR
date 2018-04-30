@@ -14,6 +14,7 @@ APP_HOME=${APP_HOME:-.}
 pip install -r $APP_HOME/fir_userinteraction/requirements.txt
 pip install -r $APP_HOME/fir_artifacts_enrichment/requirements.txt
 pip install -r $APP_HOME/fir_celery/requirements.txt
+pip install -r $APP_HOME/fir_notifications/requirements.txt
 pip install mysql-python
 pip install oauth2-sso
 

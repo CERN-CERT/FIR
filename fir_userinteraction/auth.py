@@ -11,12 +11,8 @@ from django.db.models import Q
 from functools import reduce
 
 import incidents
+from fir_userinteraction.constants import GROUPS_BL, INCIDENT_VIEWERS_ROLE, USERS_BL
 from incidents.models import Profile, AccessControlEntry, BusinessLine
-
-GROUPS_BL_NAME = 'Groups'
-
-INCIDENT_VIEWERS_ROLE = 'Incident viewers'
-USERS_BL = 'Users'
 
 
 def user_creation_function(request, user):
@@ -51,9 +47,9 @@ def get_or_create_user_bl(username):
 
 def get_or_create_groups_bl():
     try:
-        return BusinessLine.objects.get(name=GROUPS_BL_NAME, depth=1)
+        return BusinessLine.objects.get(name=GROUPS_BL, depth=1)
     except ObjectDoesNotExist:
-        return BusinessLine.add_root(name=GROUPS_BL_NAME)
+        return BusinessLine.add_root(name=GROUPS_BL)
 
 
 def group_extraction_fct(request, user, group_json):
@@ -65,20 +61,21 @@ def group_extraction_fct(request, user, group_json):
 
     user_bl = get_or_create_user_bl(user.username)
     groups_bl = get_or_create_groups_bl()
+    all_groups_bls = groups_bl.get_children()
     user_bl_acl = list(user_acls.filter(business_line__name=user.username))
     print('User bl acl: {}'.format(user_bl_acl))
     if not user_bl_acl:
         AccessControlEntry.objects.create(user=user, role=incident_viewers_role, business_line=user_bl)
-    # for ldap_group in ldap_group_names:
-    #     existing_permission = user_acls.filter(business_line__name=ldap_group)
-    #     if not existing_permission:
-    #         child_bl = groups_bl.add_child(name=ldap_group)
-    #         ace = AccessControlEntry.objects.create(user=user, role=incident_viewers_role, business_line=child_bl)
-    #         print('Created ace: {}'.format(ace))
+
+    needed_groups_filter = reduce(operator.or_, [Q(name=x) for x in ldap_group_names])
+    existing_fir_groups = all_groups_bls.filter(needed_groups_filter)
+    for group in existing_fir_groups:
+        AccessControlEntry.objects.get_or_create(role=incident_viewers_role, business_line=group, user=user)
 
     user.save()
 
-    to_remove_filter = reduce(operator.and_, (~Q(business_line__name=x) for x in ldap_group_names)) & ~Q(business_line=user_bl)
+    to_remove_filter = reduce(operator.and_, (~Q(business_line__name=x) for x in ldap_group_names)) & ~Q(
+        business_line=user_bl)
     to_remove_acls = user_acls.filter(to_remove_filter)
     print('Acls to remove: {}'.format(to_remove_acls))
     for acl in to_remove_acls:

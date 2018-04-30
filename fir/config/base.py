@@ -230,4 +230,4 @@ USER_SELF_SERVICE = {
 NOTIFICATIONS_DISABLED_EVENTS = ()
 
 # Send 'incident:*' notification events for both Event and Incident if True
-NOTIFICATIONS_MERGE_INCIDENTS_AND_EVENTS = False
+NOTIFICATIONS_MERGE_INCIDENTS_AND_EVENTS = True

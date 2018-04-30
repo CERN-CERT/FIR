@@ -36,7 +36,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated, IsAdminUser)
 
-    @list_route(methods=['get'], url_path='by_name/(?P<username>\w+)')
+    @list_route(methods=['get'], url_path='by_name/(?P<username>.+)')
     def get_by_username(self, request, username):
         user = get_object_or_404(User, username=username)
         return Response(UserSerializer(user, context={'request': request}).data, status=status.HTTP_200_OK)
@@ -73,7 +73,7 @@ class BusinessLineViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(name=name)
         return queryset
 
-    @list_route(methods=['get'], url_path='by_name/(?P<name>\w+)')
+    @list_route(methods=['get'], url_path='by_name/(?P<name>.+)')
     def get_by_name(self, request, name):
         bl = get_object_or_404(BusinessLine, name=name)
         return Response(BusinessLineSerializer(bl, context={'request': request}).data, status=status.HTTP_200_OK)
