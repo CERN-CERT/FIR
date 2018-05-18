@@ -49,8 +49,3 @@ class WatchlistSerializer(serializers.Serializer):
         child=serializers.IntegerField(allow_null=False)
     )
     form_id = serializers.CharField(allow_null=False)
-    device = serializers.CharField(allow_null=False)
-    name = serializers.CharField(allow_null=False)
-    date = serializers.CharField(allow_null=False)
-    file = serializers.CharField(allow_null=False)
-    protocol = serializers.CharField(allow_null=False)

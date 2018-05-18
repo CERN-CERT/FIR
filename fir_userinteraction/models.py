@@ -59,11 +59,13 @@ class QuestionGroup(models.Model):
     required = models.BooleanField(default=True)
     questions = models.ManyToManyField(Question, through='QuizGroupQuestionOrder',
                                        verbose_name='list of questions in this group')
-    title = models.CharField(max_length=500)
-    description = models.TextField(null=True)
+    title = models.CharField(max_length=500, null=True, blank=True)
+    label = models.CharField(max_length=500, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return '{} | required: {}'.format(self.title, self.required)
+        label_str = self.label if self.label else 'NO LABEL, PLEASE CHANGE'
+        return '{} | required: {}'.format(label_str, self.required)
 
 
 class QuizTemplate(models.Model):

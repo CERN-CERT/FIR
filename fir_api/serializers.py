@@ -61,7 +61,7 @@ class IncidentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Incident
-        exclude = ['main_business_lines', 'artifacts']
+        exclude = ['main_business_lines']
         read_only_fields = ('id', 'opened_by', 'main_business_lines', 'file_set')
 
 
