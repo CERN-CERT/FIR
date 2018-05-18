@@ -105,7 +105,7 @@ class QuizAnswer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     question_group = models.ForeignKey(QuestionGroup, on_delete=models.CASCADE)
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    answer_value = models.CharField(max_length=100, blank=True)
+    answer_value = models.TextField(blank=True)
 
     def __str__(self):
         return '{} - Question: "{}"'.format(self.question.label, self.quiz.id)
