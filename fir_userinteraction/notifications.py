@@ -149,14 +149,15 @@ class AutoNotifyMethod(NotificationMethod):
         """
         from fir_userinteraction.models import get_artifacts_for_incident
         ui_date_format = get_django_setting_or_default('UI_DATE_FORMAT', "%b %d %Y %H:%M:%S")
-        data_dict = {}
+        data_dict = {
+            'incident_name': incident.subject,
+            'incident_desc': incident.description
+        }
         if action == 'user answered':
             rendered_answers = self.get_rendered_answers(quiz)
             data_dict.update({
                 'quiz': rendered_answers,
-                'date': comment.date.strftime(ui_date_format),
-                'incident_name': incident.subject,
-                'incident_desc': incident.description
+                'date': comment.date.strftime(ui_date_format)
             })
         elif action == 'initial':
             data_dict.update(get_artifacts_for_incident(incident))

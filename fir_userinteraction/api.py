@@ -1,4 +1,5 @@
 # API related stuff
+import json
 from functools import reduce
 
 import markdown2
@@ -105,20 +106,12 @@ def subscribe_to_watchlist(request):
             except BusinessLine.DoesNotExist:
                 logging.error('Business line: {} does not exist'.format(bl))
 
-        extra_data = {
-            'name': serializer.validated_data['name'],
-            'device': serializer.validated_data['device'],
-            'date': serializer.validated_data['date'],
-            'file': serializer.validated_data['file'],
-            'protocol': serializer.validated_data['protocol'],
-            'incident_url': build_userinteraction_path(request, qz.incident_id)
-        }
         incident = qz.incident
         incident.status = 'B'
         incident.save()
 
-        for key, val in six.iteritems(extra_data):
-            create_artifact_for_incident(incident, artifact_type=key, artifact_value=val)
+        create_artifact_for_incident(incident, artifact_type='incident_url',
+                                     artifact_value=build_userinteraction_path(request, qz.incident_id))
 
         incident.save()
         Comments.objects.create(incident=incident,

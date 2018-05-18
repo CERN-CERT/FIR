@@ -8,6 +8,7 @@ from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from django.core.files import File as FileWrapper
 from django.contrib.auth.models import User, Group
+from django.template import Context, Template
 
 from rest_framework.renderers import JSONRenderer
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -53,12 +54,24 @@ class IncidentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         instance = serializer.save(opened_by=self.request.user)
         instance.refresh_main_business_lines()
+        self.populate_incident_template(instance)
         instance.done_creating()
 
     def perform_update(self, serializer):
         Comments.create_diff_comment(self.get_object(), serializer.validated_data, self.request.user)
         instance = serializer.save()
         instance.refresh_main_business_lines()
+
+    @staticmethod
+    def populate_incident_template(instance):
+        incident_templates = instance.category.incidenttemplate_set.all()
+        if len(incident_templates) > 0:
+            template = incident_templates[0]
+            data_dict = {a.type: a.value for a in instance.artifacts.all()}
+            data_dict.update({'incident_desc': instance.description, 'incident_name': instance.subject})
+            rendered_template = Template(template.description).render(Context(data_dict))
+            instance.description = rendered_template
+            instance.save()
 
 
 class BusinessLineViewSet(viewsets.ModelViewSet):
@@ -120,12 +133,20 @@ class DetectionViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, IsIncidentHandler)
 
 
-class ArtifactViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
+class ArtifactViewSet(viewsets.ModelViewSet):
     queryset = Artifact.objects.all()
     serializer_class = ArtifactSerializer
-    lookup_field = 'value'
     lookup_value_regex = '.+'
     permission_classes = (IsAuthenticated, IsIncidentHandler)
+
+    @list_route(methods=['get'], url_path='search')
+    def search(self, request):
+        art_type = request.query_params.get('type')
+        value = request.query_params.get('value')
+
+        artifacts = Artifact.objects.filter(type=art_type, value=value)
+        return Response(ArtifactSerializer(artifacts, many=True, context={'request': request}).data,
+                        status=status.HTTP_200_OK)
 
 
 class FileViewSet(ListModelMixin, RetrieveModelMixin, viewsets.GenericViewSet):
