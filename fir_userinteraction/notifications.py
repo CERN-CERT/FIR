@@ -176,6 +176,7 @@ class AutoNotifyMethod(NotificationMethod):
         }
         if action == 'user answered':
             rendered_answers = self.get_rendered_answers(quiz)
+            data_dict.update(get_artifacts_for_incident(incident))
             data_dict.update({
                 'quiz': rendered_answers,
                 'date': comment.date.strftime(ui_date_format)
