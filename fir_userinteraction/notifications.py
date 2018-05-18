@@ -90,16 +90,37 @@ class AutoNotifyMethod(NotificationMethod):
 
     @staticmethod
     def get_rendered_answers(quiz):
-        from fir_userinteraction.models import QuizAnswer
         from fir_userinteraction.models import get_or_create_global_category
 
         global_category = get_or_create_global_category()
         quiz_answer_template = global_category.categorytemplate_set.get(type=QUIZ_ANSWER_CATEGORY_TEMPLATE)
-        answers = QuizAnswer.objects.filter(quiz_id=quiz.id)
-
-        c = Context(dict(answers=answers))
+        ordered_answers = AutoNotifyMethod.get_ordered_answers(quiz)
+        c = Context(dict(answers=ordered_answers))
         rendered_template = Template(quiz_answer_template.body).render(c)
         return rendered_template
+
+    @staticmethod
+    def get_ordered_answers(quiz):
+        """
+        Takes a db quiz object which was answered and returns the ordered answers from each question group.
+        :param quiz:
+        :return:
+        """
+        from fir_userinteraction.models import QuizAnswer
+
+        ordered_answers = []
+        answers = QuizAnswer.objects.filter(quiz_id=quiz.id)
+        answer_questions = map(lambda a: a.question, answers)
+        question_groups = map(lambda x: x.question_group,
+            quiz.template.quiztemplatequestiongrouporder_set.order_by('order_index'))
+        for group in question_groups:
+            ordered_questions = map(lambda qg: qg.question, group.quizgroupquestionorder_set.order_by('order_index'))
+            for question in ordered_questions:
+                if question in answer_questions:
+                    ind = answer_questions.index(question)
+                    ordered_answers.append(answers[ind])
+
+        return ordered_answers
 
     @staticmethod
     def get_category_templates(incident, action):
