@@ -87,7 +87,7 @@ def extract_form_answers(question_group, formset):
             lambda x: x.startswith(str(question_group.id)) and x.endswith('-{}'.format(question.id)), formset.data)
         answer = formset.data[form_question_keys[0]] if len(form_question_keys) > 0 else None
         if answer:
-            answers[question.id] = str(answer)
+            answers[question.id] = unicode(answer)
     return answers
 
 

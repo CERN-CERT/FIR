@@ -36,6 +36,11 @@
     border-radius: 15px;
 }
 
+.user-comment-box {
+    max-height: 400px;
+    overflow: auto;
+}
+
 .alert-info {
     background-color: #0084ff;
     color: white;
