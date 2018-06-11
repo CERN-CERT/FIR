@@ -5,15 +5,15 @@ Module leveraging fir_notifications in order to notify users regarding actions o
 import logging
 
 import pytz
-from certsoclib.ldap_connector import LdapConnector
-from certsoclib.params import LDAP_USER_SEARCH, LDAP_GROUP_SEARCH
 from dateutil.parser import parse
 from django.core.mail import EmailMessage
 from django.template import Context, Template
 
 from fir_notifications.methods import NotificationMethod
-from fir_userinteraction.constants import USERS_BL, GROUPS_BL, QUIZ_ANSWER_CATEGORY_TEMPLATE
+from fir_userinteraction.constants import USERS_BL, GROUPS_BL, QUIZ_ANSWER_CATEGORY_TEMPLATE, LDAP_USER_SEARCH, \
+    LDAP_GROUP_SEARCH
 from fir_userinteraction.helpers import get_django_setting_or_default
+from fir_userinteraction.ldap_connection import LdapConnection
 
 
 def render_date_time_field(data_dict):
@@ -41,24 +41,46 @@ def get_query_type_from_base_bl(bl):
         return LDAP_GROUP_SEARCH
 
 
-def get_user_from_ldap(user):
-    con = LdapConnector()
-    ldap_result = filter(lambda x: x.cn == user.username,
-                         con.search_in_ldap(user.username, query_type=LDAP_USER_SEARCH))
-    if ldap_result:
-        return ldap_result[0]
-    return user.mail
+def get_entity_from_ldap(user):
+    """
+    Query LDAP for the FIR user and return some details about him. If LDAP is disabled, returns a default entity
+    with the mail registered in the Django user.
+    @param user: The Django user that needs to be obtained from LDAP
+    @return: A dictionary consisting of useful information about the user.
+    """
+    if LdapConnection.ldap_enabled():
+        con = LdapConnection()
+        ldap_result = con.search_in_ldap(user.username, query_type=LDAP_USER_SEARCH)
+        if ldap_result:
+            entity = ldap_result[0]
+            return {
+                'mail': entity['mail'],
+                'enabled': LdapConnection.check_enabled_account(entity),
+                'type': LdapConnection.get_entity_type(entity)
+            }
+    return {
+        'mail': user.email,
+        'enabled': True,
+        'type': LDAP_USER_SEARCH
+    }
 
 
 def get_bl_mails_from_ldap(bls):
-    con = LdapConnector()
-    results = []
-    for bl in bls:
-        ldap_result = filter(lambda x: x.cn == bl.name,
-                             con.search_in_ldap(bl.name, query_type=get_query_type_from_base_bl(bl)))
-        if ldap_result:
-            results.append(ldap_result[0].mail)
-    return results
+    """
+    Searches LDAP for all business lines concerned with the incident and returns the email addresses associated
+    If LDAP_ENABLED = False, it returns an empty list
+    @param bls: the business lines from FIR
+    @return: a list of emails or empty list in case LDAP is disabled
+    """
+    if LdapConnection.ldap_enabled():
+        con = LdapConnection()
+        results = []
+        for bl in bls:
+            ldap_result = con.search_in_ldap(bl.name, query_type=get_query_type_from_base_bl(bl))
+            if ldap_result:
+                results.extend([r['mail'] for r in ldap_result])
+        return list(set(results))
+    return []
 
 
 class AutoNotifyMethod(NotificationMethod):
@@ -112,7 +134,7 @@ class AutoNotifyMethod(NotificationMethod):
         answers = QuizAnswer.objects.filter(quiz_id=quiz.id)
         answer_questions = map(lambda a: a.question, answers)
         question_groups = map(lambda x: x.question_group,
-            quiz.template.quiztemplatequestiongrouporder_set.order_by('order_index'))
+                              quiz.template.quiztemplatequestiongrouporder_set.order_by('order_index'))
         for group in question_groups:
             ordered_questions = map(lambda qg: qg.question, group.quizgroupquestionorder_set.order_by('order_index'))
             for question in ordered_questions:
@@ -165,7 +187,7 @@ class AutoNotifyMethod(NotificationMethod):
         :param action: string denoting the action that took place
         :param quiz: the quiz db item
         :param incident: incident db entity
-        :param ldap_user: LdapEntity object from certsoclib
+        :param ldap_user: LdapEntity object from
         :return: dict of str
         """
         from fir_userinteraction.models import get_artifacts_for_incident
@@ -191,8 +213,8 @@ class AutoNotifyMethod(NotificationMethod):
                 'incident': incident
             })
         data_dict['username'] = quiz.user.username
-        data_dict['ldap_egroup'] = (ldap_user.get_type() == LDAP_GROUP_SEARCH)
-        data_dict = self.build_unauthorized_incident_url(ldap_user.account_enabled(), quiz, data_dict)
+        data_dict['ldap_egroup'] = (ldap_user['type'] == LDAP_GROUP_SEARCH)
+        data_dict = self.build_unauthorized_incident_url(ldap_user['enabled'], quiz, data_dict)
         return data_dict
 
     @staticmethod
@@ -209,10 +231,10 @@ class AutoNotifyMethod(NotificationMethod):
             category_template = category_templates[0]
             quiz = incident.quiz
             watchlist = self.populate_watchlist_from_ldap(quiz)
-            ldap_user = get_user_from_ldap(quiz.user)
+            ldap_user = get_entity_from_ldap(quiz.user)
             data_dict = self.populate_data_dict(instance, action, quiz, incident, ldap_user)
 
-            self.send_email(data_dict, category_template, ldap_user.mail, watchlist)
+            self.send_email(data_dict, category_template, ldap_user['mail'], watchlist)
 
     def send(self, event, users, instance, paths):
         logging.info("Sending auto-notify message: {},{},{},{}".format(event, users, instance, paths))
