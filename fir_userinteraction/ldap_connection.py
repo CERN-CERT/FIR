@@ -13,7 +13,10 @@ class LdapConnection:
         self.user_query_base = get_django_setting_or_default('LDAP_USER_QUERY_BASE', 'users')
         self.group_query_base = get_django_setting_or_default('LDAP_GROUP_QUERY_BASE', 'groups')
 
-        self.con = ldap.initialize(self.ldap_server)
+        try:
+            self.con = ldap.initialize(self.ldap_server)
+        except Exception as e:
+            logging.error('An exception has occured while initializing LDAP: {}'.format(e))
 
     @classmethod
     def ldap_enabled(cls):
@@ -53,18 +56,6 @@ class LdapConnection:
             logging.error('An exception has occured while querying LDAP: {}'.format(e))
         raw_results = [data_dict for _, data_dict in search_results]
         return [{k: v[0] if v else None for k, v in six.iteritems(i)} for i in raw_results]
-
-    @classmethod
-    def get_entity_type(cls, ldap_entity):
-        """
-        Get the type of an LDAP entity.
-        @param ldap_entity:
-        @return: a string telling whether this ldap entity is a user or a group
-        """
-        if 'managed_by' in ldap_entity:
-            return LDAP_GROUP_SEARCH
-        else:
-            return LDAP_USER_SEARCH
 
     @classmethod
     def check_enabled_account(cls, ldap_entity):

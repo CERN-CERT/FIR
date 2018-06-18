@@ -41,7 +41,7 @@ def get_query_type_from_base_bl(bl):
         return LDAP_GROUP_SEARCH
 
 
-def get_entity_from_ldap(user):
+def get_fir_user_from_ldap(user):
     """
     Query LDAP for the FIR user and return some details about him. If LDAP is disabled, returns a default entity
     with the mail registered in the Django user.
@@ -50,13 +50,13 @@ def get_entity_from_ldap(user):
     """
     if LdapConnection.ldap_enabled():
         con = LdapConnection()
-        ldap_result = con.search_in_ldap(user.username, query_type=LDAP_USER_SEARCH)
+        ldap_result = con.search_in_ldap(user.username)
         if ldap_result:
             entity = ldap_result[0]
             return {
                 'mail': entity['mail'],
                 'enabled': LdapConnection.check_enabled_account(entity),
-                'type': LdapConnection.get_entity_type(entity)
+                'type': LDAP_USER_SEARCH
             }
     return {
         'mail': user.email,
@@ -231,7 +231,7 @@ class AutoNotifyMethod(NotificationMethod):
             category_template = category_templates[0]
             quiz = incident.quiz
             watchlist = self.populate_watchlist_from_ldap(quiz)
-            ldap_user = get_entity_from_ldap(quiz.user)
+            ldap_user = get_fir_user_from_ldap(quiz.user)
             data_dict = self.populate_data_dict(instance, action, quiz, incident, ldap_user)
 
             self.send_email(data_dict, category_template, ldap_user['mail'], watchlist)
