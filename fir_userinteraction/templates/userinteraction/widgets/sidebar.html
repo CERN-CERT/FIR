@@ -13,21 +13,33 @@
                     <a style="padding:0; padding-top: 10px" href="{% url 'userinteraction:all-quizzes' %}">
                                 List all your issues</a></li>
 
-                {% if device_artifact %}
+                {% if dev_artifact %}
                 <li>
                     <h2 class="menu-header">Possible Device Actions:</h2>
                 </li>
                 <li class="quiz-useful-link">
                     <p>
-                        <a href="https://network.cern.ch/sc/fcgi/sc.fcgi?Action=SearchForUpdate&DeviceName={{device_artifact}}">
-                            Update the owner of the device "{{device_artifact}}"
+                        <a href="https://network.cern.ch/sc/fcgi/sc.fcgi?Action=SearchForUpdate&DeviceName={{dev_artifact}}">
+                            Update the owner of the device "{{dev_artifact}}"
                         </a>
                     </p>
                 </li>
                 <li class="quiz-useful-link">
                     <p>
-                        <a href="https://network.cern.ch/sc/fcgi/sc.fcgi?Action=SearchForRemove&DeviceName={{device_artifact}}">
-                            Disconnect the device "{{device_artifact}}"
+                        <a href="https://network.cern.ch/sc/fcgi/sc.fcgi?Action=SearchForRemove&DeviceName={{dev_artifact}}">
+                            Disconnect the device "{{dev_artifact}}"
+                        </a>
+                    </p>
+                </li>
+                {% endif %}
+                {% if ws_artifact %}
+                <li>
+                    <h2 class="menu-header">Possible Website Actions:</h2>
+                </li>
+                <li class="quiz-useful-link">
+                    <p>
+                        <a href="https://webservices.web.cern.ch/webservices/Services/ManageSite/?SiteName={{ws_artifact}}">
+                            Update the details of the website "{{ws_artifact}}"
                         </a>
                     </p>
                 </li>

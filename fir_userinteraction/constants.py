@@ -59,3 +59,9 @@ ALERT_CLASSES = {
 
 
 QUIZ_ANSWER_CATEGORY_TEMPLATE = 'quiz_answer'
+
+
+DEFAULT_LDAP_QUERY_FIELDS = ['mail', 'cn', 'managedBy', 'sn', 'userAccountControl']
+
+LDAP_GROUP_SEARCH = 'groups'
+LDAP_USER_SEARCH = 'users'
