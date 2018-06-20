@@ -268,3 +268,8 @@ html, body {
     background-color: #eee !important;
 }
 
+
+.quiz-useful-link-highlight {
+    color: #a94442 !important;
+    font-weight: bold;
+}
