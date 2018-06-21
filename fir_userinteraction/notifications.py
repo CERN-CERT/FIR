@@ -7,7 +7,6 @@ import logging
 import pytz
 from dateutil.parser import parse
 from django.core.mail import EmailMessage
-from django.core.mail import mail_admins
 from django.template import Context, Template
 
 from fir_notifications.methods import NotificationMethod
@@ -95,6 +94,18 @@ class AutoNotifyMethod(NotificationMethod):
         self.server_configured = True
 
     @staticmethod
+    def send_admin_mails(rendered_subject, rendered_body, sender_email):
+        from django.conf import settings
+        if not settings.ADMINS:
+            return
+        mail = EmailMessage(
+            subject='%s%s' % (settings.EMAIL_SUBJECT_PREFIX, rendered_subject), body=rendered_body,
+            from_email=sender_email, to=[a[1] for a in settings.ADMINS],
+        )
+        mail.content_subtype = 'html'
+        mail.send()
+
+    @staticmethod
     def send_email(data_dict, template, responsible_mail, cc_recipients):
         c = Context(data_dict)
         sender_email = get_django_setting_or_default('SERVER_EMAIL', 'noreply@cern.ch')
@@ -109,7 +120,7 @@ class AutoNotifyMethod(NotificationMethod):
                            cc=cc_recipients)
         msg.content_subtype = 'html'
         response = msg.send()
-        mail_admins(subject=subject_rendered, message=body_rendered, html_message=body_rendered)
+        AutoNotifyMethod.send_admin_mails(subject_rendered, body_rendered, sender_email)
         logging.info('Sent a number of {} emails'.format(response))
 
     @staticmethod
