@@ -1,6 +1,7 @@
 from importlib import import_module
 
 from django.conf import settings
+from django.core.mail import EmailMessage
 
 
 def get_django_setting_or_default(setting_name, default):
@@ -40,3 +41,24 @@ def build_userinteraction_path(request, incident_id):
         return ui_server + incident_suffix
     else:
         return '/'.join(request.build_absolute_uri().split('/', 4)[:3]) + incident_suffix
+
+
+def send_admin_mails(subject, body, sender_email, as_html=True):
+    """
+    Send an email to all registered admins
+    @param subject: the subject
+    @param body: the body of the email, plaintext or HTML
+    @param sender_email: the email that does all the sending
+    @param as_html: whether to send the content as html or not
+    """
+    # Send
+    admins = get_django_setting_or_default('ADMINS', None)
+    if not admins:
+        return
+    mail = EmailMessage(
+        subject='%s%s' % (settings.EMAIL_SUBJECT_PREFIX, subject), body=body,
+        from_email=sender_email, to=[a[1] for a in admins],
+    )
+    if as_html:
+        mail.content_subtype = 'html'
+    mail.send()

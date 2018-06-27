@@ -1,13 +1,31 @@
 stages:
+  - test
   - deploy
-  - deploy-userinteracion
 
-deploy:
+test:
+  stage: test
+  script:
+  image: python:2.7
+  script:
+    - pip install -r requirements.txt && pip install -r fir_userinteraction/requirements.txt
+    - python manage.py test
+
+deploy_qa:
   stage: deploy
   only:
     - qa
   image: gitlab-registry.cern.ch/paas-tools/openshift-client
   script:
-    - oc start-build fir --namespace test-fir-openshift --server https://openshift-dev.cern.ch --token $OPENSHIFT_DEPLOYMENT_TOKEN
-    - oc start-build fir --namespace cert-self-service --server https://openshift.cern.ch --token $CERT_SELF_SERVICE_DEPLOY_TOKEN
+    - oc start-build fir --namespace test-security-issues --server https://openshift-dev.cern.ch --token $OPENSHIFT_QA_TOKEN
+    - oc start-build fir --namespace test-cert-fir --server https://openshift-dev.cern.ch --token $OPENSHIFT_QA_TOKEN
+
+
+deploy_prod:
+  stage: deploy
+  only:
+    - master
+  image: gitlab-registry.cern.ch/paas-tools/openshift-client
+  script:
+    - oc start-build fir --namespace security-issues --server https://openshift.cern.ch --token $OPENSHIFT_PROD_TOKEN
+    - oc start-build fir --namespace cert-fir --server https://openshift.cern.ch --token $OPENSHIFT_PROD_TOKEN
 

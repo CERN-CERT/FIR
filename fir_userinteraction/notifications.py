@@ -3,6 +3,7 @@ Module leveraging fir_notifications in order to notify users regarding actions o
 """
 
 import logging
+import time
 
 import pytz
 from dateutil.parser import parse
@@ -12,7 +13,7 @@ from django.template import Context, Template
 from fir_notifications.methods import NotificationMethod
 from fir_userinteraction.constants import USERS_BL, GROUPS_BL, QUIZ_ANSWER_CATEGORY_TEMPLATE, LDAP_USER_SEARCH, \
     LDAP_GROUP_SEARCH
-from fir_userinteraction.helpers import get_django_setting_or_default
+from fir_userinteraction.helpers import get_django_setting_or_default, send_admin_mails
 from fir_userinteraction.ldap_connection import LdapConnection
 
 
@@ -41,6 +42,33 @@ def get_query_type_from_base_bl(bl):
         return LDAP_GROUP_SEARCH
 
 
+def try_ldap_query_multiple_times(query, query_type=LDAP_USER_SEARCH):
+    """
+    Tries to query LDAP for the configured amount of times
+    @param con: the LDAP Connector
+    @param query: the query itself
+    @param query_type: the type of query
+    @return: the query result or none in case of failure
+    """
+    query_count = get_django_setting_or_default('LDAP_RETRIES', 3)
+    sender_email = get_django_setting_or_default('SERVER_EMAIL', 'noreply@cern.ch')
+    count = 0
+    exception = None
+    while count < query_count:
+        try:
+            con = LdapConnection()
+            return con.search_in_ldap(query, query_type=query_type)
+        except Exception as e:
+            exception = e
+            logging.exception('An exception has occured while querying LDAP. Sleeping for 10 seconds.')
+            count += 1
+            time.sleep(10)
+    send_admin_mails('LDAP queries not working',
+                     'After multiple attempts to contact the LDAP server,'
+                     ' FIR was unable to query LDAP for some users. Exception details: \n\n{}'.format(exception),
+                     sender_email, as_html=False)
+
+
 def get_fir_user_from_ldap(user):
     """
     Query LDAP for the FIR user and return some details about him. If LDAP is disabled, returns a default entity
@@ -49,8 +77,7 @@ def get_fir_user_from_ldap(user):
     @return: A dictionary consisting of useful information about the user.
     """
     if LdapConnection.ldap_enabled():
-        con = LdapConnection()
-        ldap_result = con.search_in_ldap(user.username)
+        ldap_result = try_ldap_query_multiple_times(user.username)
         if ldap_result:
             entity = ldap_result[0]
             return {
@@ -65,22 +92,38 @@ def get_fir_user_from_ldap(user):
     }
 
 
+def get_mails_for_users_with_bl_access(bls):
+    """
+    Gets a list of business lines from FIR and finds associated FIR users with access to the BL
+    @param bls: the list of FIR business line entities
+    @return: a list of emails
+    """
+    from incidents.models import AccessControlEntry
+    user_emails = set()
+    for bl in bls:
+        bl_users = map(lambda x: x.user,
+                       AccessControlEntry.objects.filter(business_line__name=bl.name))
+        user_emails |= map(lambda user: user.email, bl_users)
+    return list(user_emails)
+
+
 def get_bl_mails_from_ldap(bls):
     """
     Searches LDAP for all business lines concerned with the incident and returns the email addresses associated
-    If LDAP_ENABLED = False, it returns an empty list
+    If LDAP_ENABLED = False, it returns all the user emails that have access to the incident's business lines.
     @param bls: the business lines from FIR
     @return: a list of emails or empty list in case LDAP is disabled
     """
     if LdapConnection.ldap_enabled():
-        con = LdapConnection()
         results = []
         for bl in bls:
-            ldap_result = con.search_in_ldap(bl.name, query_type=get_query_type_from_base_bl(bl))
+            ldap_result = try_ldap_query_multiple_times(bl.name, get_query_type_from_base_bl(bl))
             if ldap_result:
                 results.extend([r['mail'] for r in ldap_result])
         return list(set(results))
-    return []
+    else:
+        results = get_mails_for_users_with_bl_access(bls)
+        return results
 
 
 class AutoNotifyMethod(NotificationMethod):
@@ -92,18 +135,6 @@ class AutoNotifyMethod(NotificationMethod):
     def __init__(self):
         super(AutoNotifyMethod, self).__init__()
         self.server_configured = True
-
-    @staticmethod
-    def send_admin_mails(rendered_subject, rendered_body, sender_email):
-        from django.conf import settings
-        if not settings.ADMINS:
-            return
-        mail = EmailMessage(
-            subject='%s%s' % (settings.EMAIL_SUBJECT_PREFIX, rendered_subject), body=rendered_body,
-            from_email=sender_email, to=[a[1] for a in settings.ADMINS],
-        )
-        mail.content_subtype = 'html'
-        mail.send()
 
     @staticmethod
     def send_email(data_dict, template, responsible_mail, cc_recipients):
@@ -120,7 +151,7 @@ class AutoNotifyMethod(NotificationMethod):
                            cc=cc_recipients)
         msg.content_subtype = 'html'
         response = msg.send()
-        AutoNotifyMethod.send_admin_mails(subject_rendered, body_rendered, sender_email)
+        send_admin_mails(subject_rendered, body_rendered, sender_email)
         logging.info('Sent a number of {} emails'.format(response))
 
     @staticmethod
@@ -178,7 +209,7 @@ class AutoNotifyMethod(NotificationMethod):
         return []
 
     @staticmethod
-    def build_unauthorized_incident_url(user_account_enabled, quiz, data_dict):
+    def check_user_status_and_update_url(user_account_enabled, quiz, data_dict):
         """
         If the user is disabled, the incident URL has to be changed
         :param user_account_enabled: boolean representing user state
@@ -227,7 +258,7 @@ class AutoNotifyMethod(NotificationMethod):
             })
         data_dict['username'] = quiz.user.username
         data_dict['ldap_egroup'] = (ldap_user['type'] == LDAP_GROUP_SEARCH)
-        data_dict = self.build_unauthorized_incident_url(ldap_user['enabled'], quiz, data_dict)
+        data_dict = self.check_user_status_and_update_url(ldap_user['enabled'], quiz, data_dict)
         return data_dict
 
     @staticmethod

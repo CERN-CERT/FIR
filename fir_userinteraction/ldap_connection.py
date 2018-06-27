@@ -1,4 +1,3 @@
-import logging
 import ldap
 import six
 
@@ -13,10 +12,7 @@ class LdapConnection:
         self.user_query_base = get_django_setting_or_default('LDAP_USER_QUERY_BASE', 'users')
         self.group_query_base = get_django_setting_or_default('LDAP_GROUP_QUERY_BASE', 'groups')
 
-        try:
-            self.con = ldap.initialize(self.ldap_server)
-        except Exception as e:
-            logging.exception('An exception has occured while initializing LDAP: {}'.format(e))
+        self.con = ldap.initialize(self.ldap_server)
 
     @classmethod
     def ldap_enabled(cls):
@@ -36,14 +32,10 @@ class LdapConnection:
             dn = self.user_query_base
         elif query_type == LDAP_GROUP_SEARCH:
             dn = self.group_query_base
-        search_results = []
-        try:
-            search_results = self.con.search_s(dn, ldap.SCOPE_SUBTREE,
-                                               '(cn={0})'.format(cn),
-                                               query_fields
-                                               )
-        except Exception as e:
-            logging.exception('An exception has occured while querying LDAP: {}'.format(e))
+        search_results = self.con.search_s(dn, ldap.SCOPE_SUBTREE,
+                                           '(cn={0})'.format(cn),
+                                           query_fields
+                                           )
         raw_results = [data_dict for _, data_dict in search_results]
         return [{k: v[0] if v else None for k, v in six.iteritems(i)} for i in raw_results]
 

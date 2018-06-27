@@ -94,5 +94,5 @@ for app in settings.INSTALLED_APPS:
             if hasattr(mod, 'METHODS_TO_REGISTER'):
                 for method in mod.METHODS_TO_REGISTER:
                     registry.register_method(method)
-        except ImportError as e:
-            logging.exception('Exception occured while trying to load notifications for {}. Exception: {}'.format(app, e))
+        except ImportError:
+            logging.exception('Exception occured while trying to load notifications for {}.'.format(app))
