@@ -1,5 +1,6 @@
-from django.conf import settings
 from importlib import import_module
+
+from django.conf import settings
 
 
 def get_django_setting_or_default(setting_name, default):
@@ -33,9 +34,9 @@ def build_userinteraction_path(request, incident_id):
     :param incident_id: the id of the incident
     :return: a proper url for the incident
     """
-    from django.conf import settings
     incident_suffix = '/incidents/{}'.format(incident_id)
-    if settings.USER_INTERACTION_SERVER:
-        return settings.USER_INTERACTION_SERVER + incident_suffix
+    ui_server = get_django_setting_or_default('USER_INTERACTION_SERVER', '')
+    if ui_server:
+        return ui_server + incident_suffix
     else:
         return '/'.join(request.build_absolute_uri().split('/', 4)[:3]) + incident_suffix

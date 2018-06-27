@@ -34,8 +34,8 @@ def get_or_create_user_bl(username):
     except ObjectDoesNotExist:
         users_bl = BusinessLine.add_root(name=USERS_BL)
         users_bl.save()
+        users_bl = BusinessLine.objects.get(Q(name=USERS_BL) & Q(depth=1))
 
-    users_bl = BusinessLine.objects.get(Q(name=USERS_BL) & Q(depth=1))
     current_user_bls = BusinessLine.objects.filter(name=username)
     if not current_user_bls:
         bl = users_bl.add_child(name=username)
@@ -63,7 +63,6 @@ def group_extraction_fct(request, user, group_json):
     groups_bl = get_or_create_groups_bl()
     all_groups_bls = groups_bl.get_children()
     user_bl_acl = list(user_acls.filter(business_line__name=user.username))
-    print('User bl acl: {}'.format(user_bl_acl))
     if not user_bl_acl:
         AccessControlEntry.objects.create(user=user, role=incident_viewers_role, business_line=user_bl)
 
@@ -77,7 +76,6 @@ def group_extraction_fct(request, user, group_json):
     to_remove_filter = reduce(operator.and_, (~Q(business_line__name=x) for x in ldap_group_names)) & ~Q(
         business_line=user_bl)
     to_remove_acls = user_acls.filter(to_remove_filter)
-    print('Acls to remove: {}'.format(to_remove_acls))
     for acl in to_remove_acls:
         acl.delete()
 

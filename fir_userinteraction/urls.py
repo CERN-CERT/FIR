@@ -19,7 +19,6 @@ urlpatterns = [
     url(r'^incidents/(?P<incident_id>[0-9]+)/$', views.get_quiz_by_incident, name='quiz-by-incident'),
     url(r'^comment/(?P<incident_id>[0-9]+)/$', views.comment_on_quiz, name='comment'),
     url(r'^api/', include(router.urls)),
-    url(r'^api/email', api.send_account_emails, name='email-api'),
     url(r'^api/watchlist', api.subscribe_to_watchlist, name='watchlist-api'),
     url(r'^$', views.show_all_quizzes, name='all-quizzes'),
     # OAuth endpoints for the standalone version

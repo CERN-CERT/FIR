@@ -127,7 +127,6 @@ INSTALLED_APPS = (
 )
 
 
-USER_INTERACTION_SERVER = 'http://cristi-pc.cern.ch:5000'
 
 if TF_INSTALLED:
     TF_APPS = (

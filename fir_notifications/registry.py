@@ -95,4 +95,4 @@ for app in settings.INSTALLED_APPS:
                 for method in mod.METHODS_TO_REGISTER:
                     registry.register_method(method)
         except ImportError as e:
-            logging.info('No notifications defined in {}...'.format(app))
+            logging.exception('Exception occured while trying to load notifications for {}. Exception: {}'.format(app, e))
