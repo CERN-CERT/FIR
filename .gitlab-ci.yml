@@ -4,9 +4,9 @@ stages:
 
 test:
   stage: test
-  script:
   image: python:2.7
   script:
+    - apt update && apt install -y libldap2-dev libsasl2-dev && CFLAGS="-O0" pip install python-ldap
     - pip install -r requirements.txt && pip install -r fir_userinteraction/requirements.txt
     - python manage.py test
 
