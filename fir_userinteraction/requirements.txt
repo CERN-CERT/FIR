@@ -5,3 +5,4 @@ celery
 python-ldap
 pytz
 python-dateutil
+oauth2_sso
