@@ -3,6 +3,7 @@
 
 # Do pip install stuff
 pip install -U pip
+# Breaks when not using optimize flags. Might be due to memory constraints.
 CFLAGS="-O0"  pip install lxml
 
 # Do the normal assemble step
