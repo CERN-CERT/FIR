@@ -90,7 +90,7 @@ if TF_INSTALLED:
 # Authentication and authorization backends
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # default
-    #'oauth2_sso.backends.OAuth2Backend',
+    'oauth2_sso.backends.OAuth2Backend',
     'incidents.authorization.ObjectPermissionBackend',
 )
 
