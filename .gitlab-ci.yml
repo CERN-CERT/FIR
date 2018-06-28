@@ -10,22 +10,26 @@ test:
     - pip install -r requirements.txt && pip install -r fir_userinteraction/requirements.txt
     - python manage.py test
 
+.deploy_deps_template: &deploy_deps
+  before_script:
+    - apt update && apt install -y curl
+
+
 deploy_qa:
+  <<: *deploy_deps
   stage: deploy
   only:
     - qa
-  image: gitlab-registry.cern.ch/paas-tools/openshift-client
   script:
-    - oc start-build fir --namespace test-security-issues --server https://openshift-dev.cern.ch --token $OPENSHIFT_QA_TOKEN
-    - oc start-build fir --namespace test-cert-fir --server https://openshift-dev.cern.ch --token $OPENSHIFT_QA_TOKEN
+    - curl -X POST "https://openshift-dev.cern.ch:443/apis/build.openshift.io/v1/namespaces/test-security-issues/buildconfigs/fir/webhooks/${SECURITY_ISSUES_QA_TOKEN}/generic"
+    - curl -X POST "https://openshift-dev.cern.ch:443/apis/build.openshift.io/v1/namespaces/test-cert-fir/buildconfigs/fir/webhooks/${CERT_FIR_QA_TOKEN}/generic"
 
 
 deploy_prod:
+  <<: *deploy_deps
   stage: deploy
   only:
     - master
-  image: gitlab-registry.cern.ch/paas-tools/openshift-client
   script:
-    - oc start-build fir --namespace security-issues --server https://openshift.cern.ch --token $OPENSHIFT_PROD_TOKEN
-    - oc start-build fir --namespace cert-fir --server https://openshift.cern.ch --token $OPENSHIFT_PROD_TOKEN
-
+    - curl -X POST "https://openshift.cern.ch:443/apis/build.openshift.io/v1/namespaces/security-issues/buildconfigs/fir/webhooks/${SECURITY_ISSUES_PROD_TOKEN}/generic"
+    - curl -X POST "https://openshift.cern.ch:443/apis/build.openshift.io/v1/namespaces/cert-fir/buildconfigs/fir/webhooks/${CERT_FIR_PROD_TOKEN}/generic"
