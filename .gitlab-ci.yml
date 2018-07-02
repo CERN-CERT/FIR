@@ -1,0 +1,35 @@
+stages:
+  - test
+  - deploy
+
+test:
+  stage: test
+  image: python:2.7
+  script:
+    - apt update && apt install -y libldap2-dev libsasl2-dev && CFLAGS="-O0" pip install python-ldap
+    - pip install -r requirements.txt && pip install -r fir_userinteraction/requirements.txt
+    - python manage.py test
+
+.deploy_deps_template: &deploy_deps
+  before_script:
+    - apt update && apt install -y curl
+
+
+deploy_qa:
+  <<: *deploy_deps
+  stage: deploy
+  only:
+    - qa
+  script:
+    - curl -X POST "https://openshift-dev.cern.ch:443/apis/build.openshift.io/v1/namespaces/test-security-issues/buildconfigs/fir/webhooks/${SECURITY_ISSUES_QA_TOKEN}/generic"
+    - curl -X POST "https://openshift-dev.cern.ch:443/apis/build.openshift.io/v1/namespaces/test-cert-fir/buildconfigs/fir/webhooks/${CERT_FIR_QA_TOKEN}/generic"
+
+
+deploy_prod:
+  <<: *deploy_deps
+  stage: deploy
+  only:
+    - master
+  script:
+    - curl -X POST "https://openshift.cern.ch:443/apis/build.openshift.io/v1/namespaces/security-issues/buildconfigs/fir/webhooks/${SECURITY_ISSUES_PROD_TOKEN}/generic"
+    - curl -X POST "https://openshift.cern.ch:443/apis/build.openshift.io/v1/namespaces/cert-fir/buildconfigs/fir/webhooks/${CERT_FIR_PROD_TOKEN}/generic"

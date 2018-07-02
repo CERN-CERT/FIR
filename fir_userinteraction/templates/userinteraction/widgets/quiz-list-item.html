@@ -1,0 +1,23 @@
+<div class="panel-body">
+    <ul class="list-group quiz-list-group">
+        {% for quiz in quizzes %}
+        <li class="list-group-item">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-5 col-md-6 col-sm-7">
+                        <h4 class="incident-title"><a
+                                href="{% url 'userinteraction:quiz-by-incident' quiz.incident_id %}">{{quiz.incident}}</a>
+                        </h4>
+                    </div>
+                    <div class="col-lg-7 col-md-6 col-sm-5">
+                        <p class="badge badge-ui" style="float:right;margin-left:5px"><b>Date opened:</b>
+                            {{quiz.incident.date | date:"Y-m-d H:i:s"}}</p>
+                        <p class="badge badge-ui" style="float: right;"><b>Category:</b> {{quiz.template.category}}</p>
+                    </div>
+                </div>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+
+</div>

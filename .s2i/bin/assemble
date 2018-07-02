@@ -1,0 +1,21 @@
+#!/bin/bash
+
+
+# Do pip install stuff
+pip install -U pip
+# Breaks when not using optimize flags. Might be due to memory constraints.
+CFLAGS="-O0"  pip install lxml
+
+# Do the normal assemble step
+/usr/libexec/s2i/assemble
+
+# Install the extra libs
+APP_HOME=${APP_HOME:-.}
+
+pip install -r $APP_HOME/fir_userinteraction/requirements.txt
+pip install -r $APP_HOME/fir_artifacts_enrichment/requirements.txt
+pip install -r $APP_HOME/fir_celery/requirements.txt
+pip install -r $APP_HOME/fir_notifications/requirements.txt
+pip install mysql-python
+pip install oauth2-sso
+

@@ -1,0 +1,154 @@
+{% extends "userinteraction/base_user_interaction.html" %}
+{% load bootstrap %}
+{% load add_css_class %}
+{% load i18n %}
+{% load staticfiles %}
+{% load fir_plugins %}
+{% load index %}
+{% load gethash %}
+
+{% block custom_css %}
+<link href="{% static 'userinteraction/custom_css/quiz.css' %}" rel="stylesheet">
+{% endblock %}
+{% block content %}
+
+<div class="mobile-menu">
+    {% include "userinteraction/widgets/sidebar.html" with template=quiz.template dev_artifact=device_artifact ws_artifact=webservice_artifact %}
+</div>
+<div class="container-fluid main-content-ui">
+
+    <div class="row-fluid">
+
+        <div class="col-lg-8 col-lg-push-2 col-md-11 col-md-push-1 col-sm-12">
+                <div class="panel panel-default cern-grey-panel">
+                    <div class="panel-body">
+                        <a href="https://home.cern">
+                            <img src="{% static 'userinteraction/img/logo.jpg' %}"
+                                 style="max-width: 100px; float: left; display: inline-block; margin-right: 10px; padding: 10px">
+                        </a>
+                        <div class="mobile-friendly">
+
+                        <h1 class="quiz-title">
+                            {{quiz.incident}}
+                        </h1>
+                        <div class="cern-info-text">
+                            {{quiz.template.description | safe | linebreaks}}
+                        </div>
+                        </div>
+
+                    </div>
+                </div>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="col-lg-8 col-lg-push-2 col-md-11 col-md-push-1 col-sm-12">
+            <div class="non-mobile-menu">{% include "userinteraction/widgets/sidebar.html" with template=quiz.template dev_artifact=device_artifact ws_artifact=webservice_artifact %}</div>
+            <div class="content-holder">
+
+                {% if quiz %}
+                <div class="container-fluid no-side-padding">
+
+                    <div class="row-fluid">
+                        <div class="col-xs-12 no-side-padding">
+                            <div class="panel panel-danger cern-grey-panel">
+                                <div class="panel-heading incident-panel-head" data-toggle="collapse"
+                                     href="#collapseActivityDetails">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion"
+                                           href="#collapseActivityDetails"
+                                           aria-expanded="false">
+                                            <i class="caret-indicator glyphicon glyphicon-chevron-down"></i>
+                                            What has been detected?</a>
+                                    </h4>
+                                </div>
+                                <div id="collapseActivityDetails" class="panel-collapse collapse in">
+                                    <div class="panel-body" id="what-is-detected">
+                                        {{ quiz.incident.description | safe | linebreaks}}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="row-fluid">
+                        <div class="col-xs-12 no-side-padding">
+                            <div class="panel panel-warning activity-details-info">
+                                <div class="panel-heading incident-panel-head" data-toggle="collapse"
+                                     href="#collapseOne">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                                            <i class="caret-indicator glyphicon {% if not quiz.is_answered or is_incident_handler %} glyphicon-chevron-down {% else %} glyphicon-chevron-right {% endif %}"></i>
+                                            Your action needed to mitigate this issue
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="collapseOne" class="panel-collapse collapse {% if not quiz.is_answered or is_incident_handler  %} in {% endif %}">
+                                    <div class="panel-body">
+
+                                        {% if quiz.is_answered %}
+                                        <div class="alert alert-default user-display">The user that completed the form is:
+                                            <b>
+                                                {% if quiz.user %}
+                                                {{quiz.user}}
+                                                {% else %}
+                                                An anonymous user
+                                                {% endif %}
+                                            </b>
+                                        </div>
+                                        {% endif %}
+                                        <form action="{% url 'userinteraction:quiz' quiz.id %}" role="form"
+                                              class="form-vertical"
+                                              method="post" style="margin: 15px; margin-top: 5px;">
+                                            {% csrf_token %}
+                                            {% for form in formsets %}
+                                            <legend class="form-question-group">{{names | index_empty_str_for_none:forloop.counter}}
+                                            </legend>
+                                            {% if form.description %}
+                                                <div class="well well-sm">{{form.description | safe}}</div>
+                                            {% endif %}
+                                            {{form | bootstrap}}
+                                            {% endfor %}
+                                            <div style="margin-bottom: 5px"></div>
+                                            {% if not quiz.is_answered %}
+                                            <div class="form-group">
+                                                <button type="submit" class="btn btn-primary">Submit</button>
+                                            </div>
+                                            {% endif %}
+                                        </form>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="panel panel-default cern-grey-panel">
+                                <div class="panel-heading incident-panel-head" data-toggle="collapse"
+                                     href="#collapseTwo">
+                                    <h4 class="panel-title">
+                                        <i class="caret-indicator glyphicon {% if quiz.is_answered %} glyphicon-chevron-down {% else %} glyphicon-chevron-right {% endif %}"></i>
+                                        <a data-toggle="collapse" data-parent="#accordion"
+                                           href="#collapseTwo"
+                                           aria-expanded="false">
+                                            Your comments. Our answers.</a>
+                                    </h4>
+                                </div>
+                                <div id="collapseTwo" class="panel-collapse collapse {% if quiz.is_answered %} in {% endif %}">
+                                    <div class="panel-body">
+                                        {% include 'userinteraction/widgets/user-comments.html' with comments=comments quiz=quiz %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container-fluid ui-footer hidden-xs" >
+      <div class="row-fluid">
+          <div class="col-lg-8 col-lg-push-2 col-md-11 col-md-push-1 col-sm-12 ui-footer-content">
+            {% include "userinteraction/widgets/footer.html" %}
+          </div>
+      </div>
+  </div>
+{% endblock %}

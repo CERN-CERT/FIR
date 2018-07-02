@@ -77,7 +77,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.locale.LocaleMiddleware'
+    'django.middleware.locale.LocaleMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -90,6 +90,7 @@ if TF_INSTALLED:
 # Authentication and authorization backends
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # default
+    'oauth2_sso.backends.OAuth2Backend',
     'incidents.authorization.ObjectPermissionBackend',
 )
 
@@ -107,6 +108,7 @@ ROOT_URLCONF = 'fir.urls'
 WSGI_APPLICATION = 'fir.wsgi.application'
 
 INSTALLED_APPS = (
+    'oauth2_sso',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -120,8 +122,11 @@ INSTALLED_APPS = (
     'incidents',
     'fir_artifacts',
     'treebeard',
-    'fir_email'
+    'fir_email',
+    'bootstrapform'
 )
+
+
 
 if TF_INSTALLED:
     TF_APPS = (
@@ -185,9 +190,6 @@ INCIDENT_VIEWER_CAN_COMMENT = True
 # Escape HTML when displaying markdown
 MARKDOWN_SAFE_MODE = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "10.0.0.194"]
-
-
 # Allowed HTML tags in Markdown output (requires MARKDOWN_SAFE_MODE to be True)
 MARKDOWN_ALLOWED_TAGS = [
     'a',
@@ -227,4 +229,4 @@ USER_SELF_SERVICE = {
 NOTIFICATIONS_DISABLED_EVENTS = ()
 
 # Send 'incident:*' notification events for both Event and Incident if True
-NOTIFICATIONS_MERGE_INCIDENTS_AND_EVENTS = False
+NOTIFICATIONS_MERGE_INCIDENTS_AND_EVENTS = True

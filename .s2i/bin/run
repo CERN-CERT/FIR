@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Run migrations and such before the app
+python manage.py collectstatic --settings fir.config.production --noinput
+python manage.py migrate --settings fir.config.production
+
+# Launch celery worker and beat for the app
+export DJANGO_SETTINGS_MODULE=fir.config.production
+
+celery -A fir_celery.celeryconf worker -c 3 -l info &
+celery -A fir_celery.celeryconf beat -l info &
+
+# Launch the app itself
+gunicorn --workers 3 --bind 0.0.0.0:8080 fir.wsgi:application

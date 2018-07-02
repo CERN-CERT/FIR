@@ -109,7 +109,7 @@
 
 				<div class='widget' id='description'>
 					<h4 class='widget'>{%  trans "Description" %}</h4>
-					<p>{{ event.description|markdown }}</p>
+					<p>{{ event.description| safe  | linebreaks }}</p>
 				</div>
 
 				{% plugin_point 'details_main' %}

@@ -1,0 +1,8 @@
+django-bootstrap-form
+django-ipware
+django-markdownx
+celery
+python-ldap
+pytz
+python-dateutil
+oauth2_sso

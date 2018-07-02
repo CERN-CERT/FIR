@@ -1,0 +1,63 @@
+{% load static %}
+
+<nav class="navbar ui-sidebar cern-grey-panel">
+    <div class="container-fluid cern-grey-panel">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle btn btn-primary show-menu-btn" data-toggle="collapse" data-target="#sidebar">
+                Show menu
+            </button>
+        </div>
+        <div class="collapse navbar-collapse cern-grey-panel" id="sidebar" role="navigation">
+            <ul class="nav nav-sidebar">
+                <li class="quiz-useful-link list-issues-link">
+                    <a style="padding:0; padding-top: 10px" href="{% url 'userinteraction:all-quizzes' %}">
+                                List all your issues</a></li>
+
+                {% if dev_artifact %}
+                <li>
+                    <h2 class="menu-header">Possible Device Actions:</h2>
+                </li>
+                <li class="quiz-useful-link">
+                    <p>
+                        <a class="quiz-useful-link-highlight" href="https://network.cern.ch/sc/fcgi/sc.fcgi?Action=SearchForUpdate&DeviceName={{dev_artifact}}">
+                            Update the owner of the device "{{dev_artifact}}"
+                        </a>
+                    </p>
+                </li>
+                <li class="quiz-useful-link quiz-useful-link-highlight">
+                    <p>
+                        <a class="quiz-useful-link-highlight" href="https://network.cern.ch/sc/fcgi/sc.fcgi?Action=SearchForRemove&DeviceName={{dev_artifact}}">
+                            Disconnect the device "{{dev_artifact}}"
+                        </a>
+                    </p>
+                </li>
+                {% endif %}
+                {% if ws_artifact %}
+                <li>
+                    <h2 class="menu-header">Possible Website Actions:</h2>
+                </li>
+                <li class="quiz-useful-link quiz-useful-link-highlight">
+                    <p>
+                        <a class="quiz-useful-link-highlight" href="https://webservices.web.cern.ch/webservices/Services/ManageSite/?SiteName={{ws_artifact}}">
+                            Update the details of the website "{{ws_artifact}}"
+                        </a>
+                    </p>
+                </li>
+                {% endif %}
+
+                {% if template.sorted_template_links %}
+                <li >
+                    <h2 class="menu-header">Additional Help: </h2>
+                </li>
+                {% for ordering in template.sorted_template_links %}
+                <li class="quiz-useful-link">
+                    {{ordering.text | safe | linebreaks}}
+                </li>
+                {% endfor %}
+                {% endif %}
+            </ul>
+
+        </div>
+    </div>
+
+</nav>

@@ -6,6 +6,8 @@ from django.conf import settings
 
 from fir_notifications.methods.email import EmailMethod
 from fir_notifications.methods.jabber import XmppMethod
+import importlib
+import logging
 
 
 @python_2_unicode_compatible
@@ -83,3 +85,14 @@ class Notifications(object):
 registry = Notifications()
 registry.register_method(EmailMethod())
 registry.register_method(XmppMethod())
+
+# Get all notification methods from other modules, too
+for app in settings.INSTALLED_APPS:
+    if app is not 'fir_notifications':
+        try:
+            mod = importlib.import_module(app)
+            if hasattr(mod, 'METHODS_TO_REGISTER'):
+                for method in mod.METHODS_TO_REGISTER:
+                    registry.register_method(method)
+        except ImportError:
+            logging.exception('Exception occured while trying to load notifications for {}.'.format(app))

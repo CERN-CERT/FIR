@@ -16,7 +16,12 @@ DATABASES = {
 }
 
 # Do not send real emails, print them to the console instead:
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'cernmx.cern.ch'
+EMAIL_PORT = 25
+EMAIL_FROM = 'noreply@cern.ch'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATES[0]['OPTIONS']['loaders'] = (
@@ -32,7 +37,12 @@ REDIS_HOST = os.environ.get('REDIS_PORT_6379_TCP_ADDR', 'localhost')
 REDIS_PORT = 6379
 REDIS_DB = 0
 
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 5 * 3600 #
+
 try:
     from fir.config.dev import *
 except ImportError:
     pass
+
+ALLOWED_HOSTS = ['*']
