@@ -13,7 +13,7 @@
 {% block content %}
 
 <div class="mobile-menu">
-    {% include "userinteraction/widgets/sidebar.html" with template=quiz.template dev_artifact=device_artifact ws_artifact=webservice_artifact %}
+    {% include "userinteraction/widgets/sidebar.html" %}
 </div>
 <div class="container-fluid main-content-ui">
 
@@ -22,10 +22,6 @@
         <div class="col-lg-8 col-lg-push-2 col-md-11 col-md-push-1 col-sm-12">
                 <div class="panel panel-default cern-grey-panel">
                     <div class="panel-body">
-                        <a href="https://home.cern">
-                            <img src="{% static 'userinteraction/img/logo.jpg' %}"
-                                 style="max-width: 100px; float: left; display: inline-block; margin-right: 10px; padding: 10px">
-                        </a>
                         <div class="mobile-friendly">
 
                         <h1 class="quiz-title">
@@ -42,7 +38,7 @@
     </div>
     <div class="row-fluid">
         <div class="col-lg-8 col-lg-push-2 col-md-11 col-md-push-1 col-sm-12">
-            <div class="non-mobile-menu">{% include "userinteraction/widgets/sidebar.html" with template=quiz.template dev_artifact=device_artifact ws_artifact=webservice_artifact %}</div>
+            <div class="non-mobile-menu">{% include "userinteraction/widgets/sidebar.html" with template=quiz.template %}</div>
             <div class="content-holder">
 
                 {% if quiz %}

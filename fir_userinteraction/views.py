@@ -122,24 +122,8 @@ def get_ordered_question_groups(quiz):
                quiz.template.quiztemplatequestiongrouporder_set.all().order_by('order_index'))
 
 
-def get_artifact_type_for_quiz(quiz, artifact_type):
-    """
-    Get a quiz's incident and get the device if it exists in the artifacts
-    @param quiz: Quiz object from the database
-    @param artifact_type: The name of the artifact type to get
-    @return: a string containing the name (if defined), or None in case it does not exist
-    """
-    artifacts = quiz.incident.artifacts.filter(type=artifact_type)
-    if artifacts:
-        return artifacts[0].value.upper()
-    else:
-        return None
-
-
 def render_quiz(request, quiz):
     question_groups = get_ordered_question_groups(quiz)
-    webservice_artifact = get_artifact_type_for_quiz(quiz, artifact_type='webservice')
-    device_artifact = get_artifact_type_for_quiz(quiz, artifact_type='device')
     formsets = []
     if request.method == 'GET':
         for group in question_groups:
@@ -149,8 +133,6 @@ def render_quiz(request, quiz):
             'names': map(lambda x: x.title, question_groups),
             'quiz': quiz,
             'alert_classes': ALERT_CLASSES,
-            'device_artifact': device_artifact,
-            'webservice_artifact': webservice_artifact,
             'comments': quiz.incident.comments_set.order_by('-date')
         })
     else:
@@ -167,7 +149,6 @@ def render_quiz(request, quiz):
                 'formsets': formsets,
                 'names': map(lambda x: x.title, question_groups),
                 'quiz': quiz,
-                'device_artifact': device_artifact,
                 'comments': quiz.incident.comments_set.order_by('-date')
             })
         else:
@@ -181,8 +162,6 @@ def render_answered_quiz(request, quiz):
     is_incident_handler = (request.user.is_superuser or
                            request.user.groups.filter(name='Incident handlers').count() > 0)
 
-    device_artifact = get_artifact_type_for_quiz(quiz, artifact_type='device')
-    webservice_artifact = get_artifact_type_for_quiz(quiz, artifact_type='webservice')
     answers = QuizAnswer.objects.filter(quiz=quiz)
     formsets = []
     for group in question_groups:
@@ -194,8 +173,6 @@ def render_answered_quiz(request, quiz):
                   {'formsets': formsets,
                    'names': map(lambda x: x.title, question_groups),
                    'quiz': quiz,
-                   'device_artifact': device_artifact,
-                   'webservice_artifact': webservice_artifact,
                    'comments': quiz.incident.comments_set.order_by('-date'),
                    'alert_classes': ALERT_CLASSES,
                    'is_incident_handler': is_incident_handler})
