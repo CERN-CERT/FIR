@@ -9,10 +9,10 @@ from django.db.models import Q
 from fir_userinteraction.models import get_or_create_label, get_or_create_global_category, AutoNotifyDuration
 from incidents.models import Incident, Comments
 from fir_userinteraction.helpers import get_django_setting_or_default
+from incidents.models import SEVERITY_CHOICES
 
 
 def get_configured_max_time(incident):
-
     days = get_django_setting_or_default('UI_DEFAULT_MAX_DAYS', 7)
     threshold = timedelta(days=days)
     global_category = get_or_create_global_category()

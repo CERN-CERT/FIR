@@ -152,7 +152,7 @@ html, body {
     font-size: 11px;
 }
 .ui-footer {
-    z-index: -10;
+    z-index: 10;
     line-height: 1;
     padding: 2px;
     position: relative;

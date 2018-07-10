@@ -5,7 +5,7 @@ from fir.config.base import *
 
 # DEBUG to True to have helpful error pages
 DEBUG = True
-TEMPLATES[0]['OPTIONS']['debug'] = True
+TEMPLATES[0]['OPTIONS']['debug'] = DEBUG
 
 # Sqlite3 database backend
 DATABASES = {
@@ -16,12 +16,8 @@ DATABASES = {
 }
 
 # Do not send real emails, print them to the console instead:
-#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'cernmx.cern.ch'
-EMAIL_PORT = 25
-EMAIL_FROM = 'noreply@cern.ch'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATES[0]['OPTIONS']['loaders'] = (
